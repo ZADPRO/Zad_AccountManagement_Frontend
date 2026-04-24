@@ -3,6 +3,7 @@ import { FileText, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/ui/StatCard';
 import InvoiceListTable from '@/components/ui/invoiceTable';
+import api from '@/api/api';
 
 // Define a type for your Invoices
 export interface InvoiceListModel {
@@ -33,13 +34,11 @@ const PendingInvoices = () => {
       setIsLoading(true);
       try {
         const token = sessionStorage.getItem('token');
-        const res = await fetch('http://localhost:8080/api/v1/invoices?status=pending', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const json = await res.json();
+        const res = await api.get('/invoices');
+        
         
         // 1. Access the 'data' key from your backend
-        const rawData = json.data || [];
+        const rawData = res.data.data || [];
 
         // 2. Map the lowercase backend keys to your frontend model
         const mappedInvoices: InvoiceListModel[] = rawData.map((inv: any) => ({

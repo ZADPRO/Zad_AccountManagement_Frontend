@@ -50,7 +50,7 @@ const ChangePassword = () => {
   } catch (err) {
     setError("Failed to update");
   } finally {
-  setIsLoading(false); // 🔥 prevents stuck loading
+  setIsLoading(false); 
 }
 };
 

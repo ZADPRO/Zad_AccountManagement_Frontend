@@ -77,9 +77,8 @@ const UserManagement = () => {
   const confirmDeleteAction = async () => {
     if (!userToDelete) return;
     try {
-      const res = await api.delete(`/users/${userToDelete.userId}`, {
-        data: { updatedBy: 5 }
-      });
+       const res = await api.delete(`/users/${userToDelete.userId}`);
+      
 
       if (res.status === 200) {
         setRefreshKey(prev => prev + 1);

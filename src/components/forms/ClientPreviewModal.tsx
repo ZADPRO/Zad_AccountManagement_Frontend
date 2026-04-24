@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import api from '@/api/apitest';
 
 interface ViewClientProps {
   isOpen: boolean;
@@ -20,20 +21,13 @@ const ClientPreviewModal = ({ isOpen, onClose, clientId }: ViewClientProps) => {
       setError(null);
       try {
         const token = sessionStorage.getItem('token');
-        const res = await fetch(`http://localhost:8080/api/v1/clients/${clientId}`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-
-        const json = await res.json();
-        if (json.status) {
-          setData(json.data);
+        const res = await api.get(`/clients/${clientId}`);
+       
+        
+        if (res.data?.status) {
+          setData(res.data.data);
         } else {
-          throw new Error(json.message || "Failed to fetch data");
+          throw new Error(res.data?.message || "Failed to fetch data");
         }
       } catch (err: any) {
         console.error("View Fetch Error:", err);

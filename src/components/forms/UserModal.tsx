@@ -44,6 +44,7 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
       if (isOpen && userId && mode !== 'create') {
         setLoading(true);
         try {
+           
           const res = await api.get(`/users/${userId}`);
           if (res.data.status) {
             const data = res.data.data;
@@ -108,11 +109,13 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
 
     const names = formData.fullName.trim().split(' ');
     const payload: any = {
-      ...formData,
+      username: formData.username,
+      email: formData.email,
       firstName: names[0] || '',
       lastName: names.slice(1).join(' ') || '',
-      roleId: Number(formData.roleId)
-    };
+     roleId: Number(formData.roleId)
+     };
+
 
     if (mode === 'create') {
       payload.userCode = generateUserCode(payload.roleId);

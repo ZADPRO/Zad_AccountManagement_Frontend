@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import api from "@/api/api";
 import { useAuth } from "@/context/AuthContext"; 
+import { encrypt, decrypt } from  "@/Utils/encryptionHelper"
 
 
 const LoginPage = () => {
@@ -13,48 +14,46 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      // ✅ Call your Go Backend (Controller.Login)
-      const response = await api.post('/login', {
-        email: email,
-        password: password
-      });
+  try {
+    const response = await api.post('/login', {
+      email,
+      password
+    });
 
-      if (response.data.status) {
-        const { token, role, isFirstLogin, userId, name } = response.data;
-        console.log(userId); 
-        console.log(name);
-        // ✅ 1. Store the token for Axios Interceptors
-        sessionStorage.setItem("token", token);
-        
-        // ✅ 2. Store userId in sessionStorage (Needed by ChangePassword.tsx)
-        // We store it as a string, but ChangePassword will need to parse it
-        sessionStorage.setItem("userId", String(userId));
-        sessionStorage.setItem("username", name);
-        // ✅ 3. Update Global Auth State
-        // This triggers the 'Gatekeeper' logic in App.tsx
-        login(role, isFirstLogin, userId);
+    console.log("📦 Final response (after interceptor):", response.data);
 
-        // ✅ 4. Conditional Navigation Logic
-        if (isFirstLogin) {
-          // Redirect to change password if it's their first time
-          navigate('/change-password', { replace: true });
-        } else {
-          // Move to dashboard (App.tsx handles role-based routing from root)
-          navigate('/', { replace: true });
-        }
+    // ✅ Now data is already decrypted
+    const { token, role, isFirstLogin, userId, name, status } = response.data;
+
+    if (!token) throw new Error("Token missing");
+
+    // ✅ Store token
+    sessionStorage.setItem("token", token);
+
+    if (status) {
+      sessionStorage.setItem("userId", String(userId));
+      sessionStorage.setItem("username", name);
+
+      login(role, isFirstLogin, userId);
+
+      if (isFirstLogin) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate('/', { replace: true });
       }
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.response?.data?.message || "Invalid email or password");
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+  } catch (err: any) {
+    console.error("❌ Login error:", err);
+    setError(err.response?.data?.message || "Invalid email or password");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 relative overflow-hidden">
