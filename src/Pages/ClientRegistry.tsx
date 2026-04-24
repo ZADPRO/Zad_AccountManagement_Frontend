@@ -123,7 +123,7 @@ const handleDelete = async (id: number) => {
       <div className="grid grid-cols-3 gap-4">
         <StatCard label="Total" value={clients.length} icon={<Users />} />
         <StatCard label="Active" value={clients.filter(c => c.isActive).length} icon={<ShieldCheck />} />
-        <StatCard label="Inactive" value={clients.filter(c => !c.isActive).length} icon={<Globe />} />
+        
       </div>
 
       <div className="flex items-center justify-between gap-4">

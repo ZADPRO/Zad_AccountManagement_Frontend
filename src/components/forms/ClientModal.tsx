@@ -17,10 +17,9 @@ interface DropdownItem {
 
 interface ClientModalProps {
   isOpen: boolean;
-
   onClose: () => void;
   onSave: (client: any) => void;
-  initialData?: any; // Used to get the ID for fetching
+  initialData?: any;
   mode?: "create" | "edit" | "view";
 }
 
@@ -36,12 +35,14 @@ const ClientModal = ({
     const random = Math.floor(100 + Math.random() * 900);
     return `CLT-${year}-${random}`;
   };
-  const getSupplyTypeId = (type: string, country: string) => {
-    if (country !== "India") return 3; // Export
+
+  const getSupplyTypeId = (type: string) => {
+    if (type === "Export") return 3;
     if (type === "B2B") return 1;
     if (type === "B2C") return 2;
     return 1;
   };
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(mode !== "view");
@@ -80,28 +81,32 @@ const ClientModal = ({
     name: "",
     email: "",
     mobileNumber: "",
-    address: "",
-    country: "India",
-    state: "",
+
+    // Step 1 - Registered Address
+    registeredAddress: "",
+    registeredCountry: "India",
+    registeredState: "",
     zip: "",
+
+    // Step 2 - Billing + Tax
+    billingAddress: "",
+    billingCountryId: 0,
+    billingStateId: 0,
     gstStatus: "Registered",
     supplyType: "B2B",
     gstNumber: "",
     pan: "",
+    taxPercentage: 0,
   };
 
   const [formData, setFormData] = useState(emptyForm);
 
-  // 1. Logic to fetch Dropdowns and Detailed Client Data
   useEffect(() => {
     const initializeModal = async () => {
       if (!isOpen) return;
-
       setLoading(true);
 
       try {
-        // 1. Fetch Dropdowns using your 'api' instance
-        // Axios handles the baseURL and the token automatically
         const [countryRes, stateRes] = await Promise.all([
           api.get("/dropdowns/countries"),
           api.get("/dropdowns/states"),
@@ -110,7 +115,6 @@ const ClientModal = ({
         const countryData = Array.isArray(countryRes.data?.data)
           ? countryRes.data.data
           : [];
-
         const stateData = Array.isArray(stateRes.data?.data)
           ? stateRes.data.data
           : [];
@@ -118,28 +122,45 @@ const ClientModal = ({
         setCountries(countryData);
         setStates(stateData);
 
-        // 2. Fetch Detailed Data if in Edit or View mode
         const clientId = initialData?.clientId || initialData?.clientID;
 
         if (clientId && mode !== "create") {
           const res = await api.get(`/clients/${clientId}`);
-          const responseData = res.data; // This is { status: true, data: {...} }
+          const responseData = res.data;
           const clientDetails = responseData.data;
 
           if (responseData.status && clientDetails) {
+            // Find billing country and state IDs from names
+            const billingCountry = countryData.find(
+              (c: DropdownItem) =>
+                c.name === clientDetails.billingCountryName
+            );
+            const billingState = stateData.find(
+              (s: DropdownItem) =>
+                s.name === clientDetails.billingStateName
+            );
+
             setFormData({
-              id: clientDetails.clientId || clientDetails.id || clientId,
+              id: clientDetails.clientId || clientId,
               clientCode: clientDetails.clientCode || "",
               name: clientDetails.name || clientDetails.businessName || "",
               email: clientDetails.email || "",
               mobileNumber:
                 clientDetails.mobilenumber || clientDetails.mobileNumber || "",
-              address:
-                clientDetails.address || clientDetails.registeredAddress || "",
-              country:
+
+              // Registered
+              registeredAddress:
+                clientDetails.registeredAddress || clientDetails.address || "",
+              registeredCountry:
                 clientDetails.countryName || clientDetails.country || "India",
-              state: clientDetails.stateName || clientDetails.state || "",
+              registeredState:
+                clientDetails.stateName || clientDetails.state || "",
               zip: clientDetails.zip?.toString() || "",
+
+              // Billing + Tax
+              billingAddress: clientDetails.billingAddress || "",
+              billingCountryId: billingCountry?.id as number || 0,
+              billingStateId: billingState?.id as number || 0,
               gstStatus:
                 clientDetails.gststatus ||
                 clientDetails.gstStatus ||
@@ -149,20 +170,19 @@ const ClientModal = ({
               gstNumber:
                 clientDetails.gstnumber || clientDetails.gstNumber || "",
               pan: clientDetails.pan || "",
+              taxPercentage: clientDetails.taxPercentage || clientDetails.tax_percentage || 0,
             });
-          } else {
-            // CREATE MODE: Assign the auto-incremented ID and CLT Code
-
-            setFormData((prev) => ({
-              ...emptyForm,
-              clientCode: generateClientCode(),
-            }));
           }
+        } else {
+          setFormData({
+            ...emptyForm,
+            clientCode: generateClientCode(),
+          });
         }
       } catch (err: any) {
         console.error(
           "Initialization failed:",
-          err.response?.data?.message || err.message,
+          err.response?.data?.message || err.message
         );
       } finally {
         setLoading(false);
@@ -175,65 +195,52 @@ const ClientModal = ({
     initializeModal();
   }, [isOpen, initialData, mode]);
 
-  // Auto-set supply type logic based on country
-  useEffect(() => {
-    if (isEditing && formData.country) {
-      if (formData.country !== "India") {
-        setFormData((prev) => ({ ...prev, supplyType: "Export" }));
-      } else if (
-        formData.country !== "India" &&
-        formData.supplyType === "Export"
-      ) {
-        setFormData((prev) => ({ ...prev, supplyType: "B2B" }));
-      }
-    }
-  }, [formData.country, isEditing]);
-
   if (!isOpen) return null;
 
-  // Validation Helpers
   const isValidMobile = (num: string) => /^[0-9]{10}$/.test(num);
   const isValidZip = (zip: string) => /^[0-9]{6}$/.test(zip);
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // Derive billing country name for conditionals
+  const billingCountryObj = countries.find(
+    (c) => c.id === formData.billingCountryId
+  );
+  const isIndiaBilling = billingCountryObj?.name === "India";
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
     if (isEditing && step === 1) {
-      // 1. Basic Details
       if (!formData.name.trim()) newErrors.name = "required";
-
-      if (!isValidMobile(formData.mobileNumber)) {
+      if (!isValidMobile(formData.mobileNumber))
         newErrors.mobileNumber = "10 digits required";
-      }
-
-      // 2. Email Validation (Cleaned up duplicate)
       if (!formData.email.trim()) {
         newErrors.email = "required";
       } else if (!isValidEmail(formData.email)) {
         newErrors.email = "invalid format";
       }
-
-      // 3. Address & Country
-      if (!formData.address.trim()) newErrors.address = "required";
-      if (!formData.country) newErrors.country = "required";
-
-      // 4. State (Only required for India)
-      if (formData.country === "India" && !formData.state) {
-        newErrors.state = "required";
+      if (!formData.registeredAddress.trim())
+        newErrors.registeredAddress = "required";
+      if (!formData.registeredCountry)
+        newErrors.registeredCountry = "required";
+      if (
+        formData.registeredCountry === "India" &&
+        !formData.registeredState
+      ) {
+        newErrors.registeredState = "required";
       }
-
-      // 5. Zip Code (Required for everyone, but 6-digit check only for India)
       if (!formData.zip.trim()) {
         newErrors.zip = "required";
-      } else if (formData.country === "India" && !isValidZip(formData.zip)) {
+      } else if (
+        formData.registeredCountry === "India" &&
+        !isValidZip(formData.zip)
+      ) {
         newErrors.zip = "6 digits required";
       }
     }
 
-    // --- Final Check ---
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -245,54 +252,61 @@ const ClientModal = ({
 
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const finalErrors: Record<string, string> = {};
 
-    // Validate Step 3 fields manually since we disabled browser validation
+    if (!formData.billingAddress.trim())
+      finalErrors.billingAddress = "required";
+    if (!formData.billingCountryId)
+      finalErrors.billingCountryId = "required";
+    if (isIndiaBilling && !formData.billingStateId)
+      finalErrors.billingStateId = "required";
     if (
-      formData.country === "India" &&
+      isIndiaBilling &&
       formData.gstStatus === "Registered" &&
       !formData.gstNumber.trim()
     ) {
       finalErrors.gstNumber = "required";
     }
-    if (!formData.pan.trim()) {
-      finalErrors.pan = "required";
-    }
+    if (!formData.pan.trim()) finalErrors.pan = "required";
 
     if (Object.keys(finalErrors).length > 0) {
       setErrors(finalErrors);
       return;
     }
 
-    // If we reach here, data is valid
     setErrors({});
-    const isExport = formData.country !== "India";
 
-    // Construct payload only after validation passes
-    const payload = {
-      clientId: formData.id,
+    const payload = { 
+      clientId: formData.id, 
       clientCode: formData.clientCode || generateClientCode(),
       name: formData.name,
       businessName: formData.name,
-      supplytypeid: getSupplyTypeId(formData.supplyType, formData.country),
-      clienttype: isExport ? "Export" : "Direct",
-      email: formData.email || "", // Ensure no undefined values
+      supplytypeid: getSupplyTypeId(formData.supplyType),
+      clienttype: formData.supplyType === "Export" ? "Export" : "Direct",
+      email: formData.email || "",
       mobilenumber: formData.mobileNumber,
-      registeredAddress: formData.address,
-      countryName: formData.country,
-      stateName: isExport ? "Export" : formData.state,
-      zip: isExport ? Number(formData.zip) || 0 : Number(formData.zip) || 0,
-      gstnumber: isExport ? "" : formData.gstNumber,
+
+      // Registered Address
+      registeredAddress: formData.registeredAddress,
+      countryName: formData.registeredCountry,
+      stateName: formData.registeredState,
+      zip: Number(formData.zip) || 0,
+
+      // Billing + Tax
+      billingAddress: formData.billingAddress,
+      billingCountryId: formData.billingCountryId,
+      billingStateId: formData.billingStateId,
+      gstnumber: isIndiaBilling ? formData.gstNumber : "",
       pan: formData.pan,
-      isexport: isExport,
-      gststatus: isExport ? "URD" : formData.gstStatus,
+      isexport: !isIndiaBilling,
+      gststatus: isIndiaBilling ? formData.gstStatus : "URD",
+      tax_percentage: formData.taxPercentage,
     };
 
     setPreparedPayload(payload);
     setShowPreview(true);
-    setFormData(emptyForm);
   };
+
   const inputClass = `w-full bg-white border border-slate-200 rounded-xl p-3.5 text-slate-900 outline-none transition-all ${
     !isEditing
       ? "bg-slate-50 cursor-not-allowed border-slate-100"
@@ -300,357 +314,415 @@ const ClientModal = ({
   }`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="bg-white border border-slate-200 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative">
-        {/* HEADER WITH VISUAL STEP INDICATOR */}
-        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div
-              className={`p-2 rounded-xl ${!isEditing ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600"}`}
-            >
-              {!isEditing ? <Eye size={18} /> : <Edit3 size={18} />}
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                {/* Rely on the 'mode' prop which is passed immediately */}
-                {mode === "view" && "Client Details"}
-                {mode === "edit" && "Edit Client"}
-                {mode === "create" && "Add New Client"}
-              </h2>
-              {/* NON-TEXT INDICATOR DOTS */}
-              <div className="flex gap-1.5 mt-1">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+    <div className="bg-white border border-slate-200 w-full max-w-2xl rounded-3xl shadow-2xl relative flex flex-col max-h-[90vh] min-h-0">
+      
+      {/* HEADER - Fixed at top */}
+      <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-4">
+          <div
+            className={`p-2 rounded-xl transition-colors duration-300 ${
+              !isEditing ? "bg-amber-50 text-amber-600" : "bg-blue-50 text-blue-600"
+            }`}
+          >
+            {!isEditing ? <Eye size={18} /> : <Edit3 size={18} />}
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              {mode === "view" && "Client Details"}
+              {mode === "edit" && "Edit Client"}
+              {mode === "create" && "Add New Client"}
+            </h2>
+            <div className="flex gap-1.5 mt-1">
+              {[1, 2].map((s) => (
                 <div
-                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${step === 1 ? "bg-blue-600" : "bg-slate-200"}`}
+                  key={s}
+                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
+                    step === s ? "bg-blue-600" : "bg-slate-200"
+                  }`}
                 />
-                <div
-                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${step === 2 ? "bg-blue-600" : "bg-slate-200"}`}
-                />
-              </div>
+              ))}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
-          >
-            <X size={20} />
-          </button>
         </div>
+        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
+          <X size={20} />
+        </button>
+      </div>
 
+      {/* BODY - Scrollable Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center space-y-4">
             <Loader2 className="animate-spin text-blue-600" size={32} />
-            <p className="text-slate-400 text-sm font-medium">
-              Fetching details...
-            </p>
+            <p className="text-slate-400 text-sm font-medium">Fetching details...</p>
           </div>
         ) : (
           <form onSubmit={handleFinalSubmit} noValidate className="p-6">
-            {/* STEP 1: MERGED CONTACT & ADDRESS */}
+
+            {/* STEP 1 — Contact & Registered Address */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  
                   <div className="col-span-2 space-y-1">
-                    <FieldLabel
-                      label="Business Name"
-                      fieldName="name"
-                      required
-                    />
+                    <FieldLabel label="Business Name" fieldName="name" required />
                     <input
-                      required
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.name ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                       value={formData.name}
                       onChange={(e) => {
                         setFormData({ ...formData, name: e.target.value });
-                        if (errors.name)
-                          setErrors((prev) => ({ ...prev, name: "" }));
+                        if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
                       }}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <FieldLabel label="Email" fieldName="email" />
+                    <FieldLabel label="Email" fieldName="email" required />
                     <input
                       type="email"
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.email ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                       value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <FieldLabel
-                      label="Mobile"
-                      fieldName="mobileNumber"
-                      required
-                    />
+                    <FieldLabel label="Mobile" fieldName="mobileNumber" required />
                     <input
-                      required
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.mobileNumber ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                       value={formData.mobileNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          mobileNumber: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                     />
                   </div>
 
                   <div className="col-span-2 space-y-1">
-                    <FieldLabel
-                      label="Billing Address"
-                      fieldName="address"
-                      required
-                    />
+                    <FieldLabel label="Registered Address" fieldName="registeredAddress" required />
                     <textarea
-                      required
                       disabled={!isEditing}
-                      className={`${inputClass} h-16 py-2 text-sm resize-none ${errors.address ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
+                      className={`${inputClass} h-16 py-2 text-sm resize-none ${errors.registeredAddress ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                      value={formData.registeredAddress}
+                      onChange={(e) => setFormData({ ...formData, registeredAddress: e.target.value })}
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <FieldLabel label="Country" fieldName="country" required />
+                  <div className={formData.registeredCountry === "India" ? "col-span-1 space-y-1" : "col-span-2 space-y-1"}>
+                    <FieldLabel label="Country" fieldName="registeredCountry" required />
                     <select
-                      required
                       disabled={!isEditing}
-                      className={`${inputClass} py-2 text-sm ${errors.country ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                      value={formData.country}
+                      className={`${inputClass} py-2 text-sm ${errors.registeredCountry ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                      value={formData.registeredCountry}
                       onChange={(e) =>
-                        setFormData({ ...formData, country: e.target.value })
+                        setFormData({
+                          ...formData,
+                          registeredCountry: e.target.value,
+                          registeredState: "",
+                        })
                       }
                     >
                       <option value="">Select</option>
                       {countries.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
+                        <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* State + Zip — only for India */}
+                  <div className="space-y-3">
+  {/* Row 1: State (Only for India) */}
+  {formData.registeredCountry === "India" && (
+    <div className="space-y-1">
+      <FieldLabel label="State" fieldName="registeredState" required />
+      <select
+        disabled={!isEditing}
+        className={`${inputClass} py-2 text-sm ${errors.registeredState ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+        value={formData.registeredState}
+        onChange={(e) => setFormData({ ...formData, registeredState: e.target.value })}
+      >
+        <option value="">State</option>
+        {states.map((s) => (
+          <option key={s.id} value={s.name}>{s.name}</option>
+        ))}
+      </select>
+    </div>
+  )}
+
+  {/* Row 2: Zip (Always visible, but now on its own line) */}
+  <div className="space-y-1">
+    <FieldLabel 
+      label="Zip" 
+      fieldName="zip" 
+      required={formData.registeredCountry === "India"} 
+    />
+    <input
+      disabled={!isEditing}
+      placeholder="Enter Zip/Postal Code"
+      className={`${inputClass} py-2 text-sm ${errors.zip ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+      value={formData.zip}
+      onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+    />
+  </div>
+</div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2 — Billing Address & Tax Info */}
+            {step === 2 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                
+                <div className="space-y-1">
+                  <FieldLabel label="Billing Address" fieldName="billingAddress" required />
+                  <textarea
+                    disabled={!isEditing}
+                    className={`${inputClass} h-16 py-2 text-sm resize-none ${errors.billingAddress ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                    value={formData.billingAddress}
+                    onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={isIndiaBilling ? "col-span-1 space-y-1" : "col-span-2 space-y-1"}>
+                    <FieldLabel label="Billing Country" fieldName="billingCountryId" required />
+                    <select
+                      disabled={!isEditing}
+                      className={`${inputClass} py-2 text-sm ${errors.billingCountryId ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                      value={formData.billingCountryId}
+                      onChange={(e) => {
+                        const selectedId = Number(e.target.value);
+                        const selectedCountry = countries.find((c) => c.id === selectedId);
+                        const isExport = selectedCountry?.name !== "India";
+                        setFormData({
+                          ...formData,
+                          billingCountryId: selectedId,
+                          billingStateId: 0,
+                          supplyType: isExport ? "Export" : "B2B",
+                          gstStatus: isExport ? "URD" : "Registered",
+                          gstNumber: isExport ? "" : formData.gstNumber,
+                        });
+                      }}
+                    >
+                      <option value={0}>Select Country</option>
+                      {countries.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Billing State — only for India */}
+                  {isIndiaBilling && (
                     <div className="space-y-1">
-                      <FieldLabel label="State" fieldName="state" required />
+                      <FieldLabel label="Billing State" fieldName="billingStateId" required />
                       <select
-                        required
                         disabled={!isEditing}
-                        className={`${inputClass} py-2 text-sm ${errors.state ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                        value={formData.state}
-                        onChange={(e) =>
-                          setFormData({ ...formData, state: e.target.value })
-                        }
+                        className={`${inputClass} py-2 text-sm ${errors.billingStateId ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                        value={formData.billingStateId}
+                        onChange={(e) => setFormData({ ...formData, billingStateId: Number(e.target.value) })}
                       >
-                        <option value="">State</option>
+                        <option value={0}>Select State</option>
                         {states.map((s) => (
-                          <option key={s.id} value={s.name}>
-                            {s.name}
-                          </option>
+                          <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-1">
-                      <FieldLabel label="Zip" fieldName="zip" required />
-                      <input
-                        required
-                        disabled={!isEditing}
-                        className={`${inputClass} py-2 text-sm ${errors.zip ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                        value={formData.zip}
-                        onChange={(e) =>
-                          setFormData({ ...formData, zip: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: TAX INFO */}
-            {step === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="grid grid-cols-2 gap-4">
-                  {formData.country === "India" && (
-                    <div className="space-y-1">
-                      <FieldLabel label="GST Status" fieldName="gstStatus" />
-                      <select
-                        disabled={!isEditing}
-                        className={`${inputClass} py-2 text-sm`}
-                        value={formData.gstStatus}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            gstStatus: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="Registered">Registered</option>
-                        <option value="URD">Unregistered</option>
-                      </select>
-                    </div>
                   )}
-                  <div className="space-y-1">
-                    <FieldLabel label="Supply Type" fieldName="supplyType" />
-                    <select
-                      disabled={!isEditing}
-                      className={`${inputClass} py-2 text-sm`}
-                      value={formData.supplyType}
-                      onChange={(e) =>
-                        setFormData({ ...formData, supplyType: e.target.value })
-                      }
-                    >
-                      {formData.country === "India" ? (
-                        <>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4 space-y-4">
+                  
+                  {/* GST Status + Supply Type — India only */}
+                  {isIndiaBilling && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <FieldLabel label="GST Status" fieldName="gstStatus" />
+                        <select
+                          disabled={!isEditing}
+                          className={`${inputClass} py-2 text-sm`}
+                          value={formData.gstStatus}
+                          onChange={(e) => setFormData({ ...formData, gstStatus: e.target.value })}
+                        >
+                          <option value="Registered">Registered</option>
+                          <option value="URD">Unregistered</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <FieldLabel label="Supply Type" fieldName="supplyType" />
+                        <select
+                          disabled={!isEditing}
+                          className={`${inputClass} py-2 text-sm`}
+                          value={formData.supplyType}
+                          onChange={(e) => setFormData({ ...formData, supplyType: e.target.value })}
+                        >
                           <option value="B2B">B2B</option>
                           <option value="B2C">B2C</option>
-                        </>
-                      ) : (
-                        <option value="Export">Export</option>
-                      )}
-                    </select>
-                  </div>
-                </div>
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
-                {formData.country === "India" &&
-                  formData.gstStatus === "Registered" && (
+                  {/* GSTIN — India + Registered only */}
+                  {isIndiaBilling && formData.gstStatus === "Registered" && (
                     <div className="space-y-1">
-                      <FieldLabel
-                        label="GSTIN"
-                        fieldName="gstNumber"
-                        required
-                      />
+                      <FieldLabel label="GSTIN" fieldName="gstNumber" required />
                       <input
-                        required
                         disabled={!isEditing}
                         className={`${inputClass} py-2 text-sm ${errors.gstNumber ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                         value={formData.gstNumber}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            gstNumber: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
                       />
                     </div>
                   )}
 
-                <div className="space-y-1">
-                  <FieldLabel
-                    label={formData.country === "India" ? "PAN" : "Tax ID"}
-                    fieldName="pan"
-                    required
-                  />
-                  <input
-                    required
-                    disabled={!isEditing}
-                    className={`${inputClass} py-2 text-sm ${errors.pan ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                    value={formData.pan}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pan: e.target.value })
-                    }
-                  />
+                  {/* PAN / Tax ID + Tax % */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <FieldLabel label={isIndiaBilling ? "PAN" : "Tax ID"} fieldName="pan" required />
+                      <input
+                        disabled={!isEditing}
+                        className={`${inputClass} py-2 text-sm ${errors.pan ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
+                        value={formData.pan}
+                        onChange={(e) => setFormData({ ...formData, pan: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <FieldLabel label="Tax %" fieldName="taxPercentage" />
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        disabled={!isEditing}
+                        className={`${inputClass} py-2 text-sm`}
+                        value={formData.taxPercentage}
+                        onChange={(e) =>
+                          setFormData({ ...formData, taxPercentage: Number(e.target.value) })
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-
-            {/* COMPACT FOOTER */}
-            <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={step === 1 ? onClose : () => setStep(1)}
-                className="text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1 hover:text-slate-600 transition-colors"
-              >
-                {step > 1 && <ChevronLeft size={14} />}
-                {step === 1 ? "Cancel" : "Back"}
-              </button>
-
-              {step === 1 ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95"
-                >
-                  Next <ChevronRight size={16} />
-                </button>
-              ) : (
-                isEditing && (
-                  <button
-                    type="submit"
-                    className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all active:scale-95"
-                  >
-                    Review Details <Eye size={16} />
-                  </button>
-                )
-              )}
-            </div>
           </form>
         )}
+      </div>
 
-        {/* PREVIEW POPUP remains mostly the same, but you may want to ensure it also uses text-sm for consistency */}
-        {showPreview && preparedPayload && (
-          <div className="absolute inset-0 z-70 bg-white flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in duration-200 overflow-y-auto">
+      {/* FOOTER - Fixed at bottom */}
+      <div className="p-6 pt-4 border-t border-slate-100 bg-white rounded-b-3xl shrink-0 flex justify-between items-center">
+        <button
+          type="button"
+          onClick={step === 1 ? onClose : () => setStep(1)}
+          className="text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1 hover:text-slate-600"
+        >
+          {step > 1 && <ChevronLeft size={14} />}
+          {step === 1 ? "Cancel" : "Back"}
+        </button>
+
+        {step === 1 ? (
+          <button
+            type="button"
+            onClick={handleNext}
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        ) : (
+          isEditing && (
+            <button
+              type="button"
+              onClick={handleFinalSubmit}
+              className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 active:scale-95 transition-all"
+            >
+              Review Details <Eye size={16} />
+            </button>
+          )
+        )}
+      </div>
+
+      {/* PREVIEW — fully scrollable, pinned footer */}
+      {showPreview && preparedPayload && (
+        <div className="absolute inset-0 z-[70] bg-white flex flex-col rounded-3xl overflow-hidden">
+          
+          {/* Scrollable preview content */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-8 flex flex-col items-center">
             <div className="bg-blue-50 p-3 rounded-full text-blue-600 mb-4">
               <CheckCircle2 size={40} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">
-              Review Information
-            </h3>
-            <div className="w-full max-w-2xl bg-slate-50 rounded-2xl p-6 space-y-4 mb-8 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(preparedPayload).map(([key, value]) => (
-                  <div key={key}>
-                    <p className="text-slate-400 text-xs uppercase font-bold">
-                      {key}
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">Review Information</h3>
+
+            <div className="w-full max-w-xl bg-slate-50 rounded-2xl p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {[
+                  { label: "Business", val: preparedPayload.name },
+                  { label: "Email", val: preparedPayload.email },
+                  { label: "Contact", val: preparedPayload.mobilenumber },
+                  { label: "Tax ID / PAN", val: preparedPayload.pan },
+                  { label: "GST Status", val: preparedPayload.gststatus },
+                  { label: "GSTIN", val: preparedPayload.gstnumber || "-" },
+                  { label: "Supply Type", val: preparedPayload.clienttype },
+                  { label: "Tax %", val: `${preparedPayload.tax_percentage}%` },
+                  { label: "Is Export", val: preparedPayload.isexport ? "Yes" : "No" },
+                ].map((item, idx) => (
+                  <div key={idx}>
+                    <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                      {item.label}
                     </p>
-                    <p className="font-semibold wrap-break-word">
-                      {value?.toString() || "-"}
-                    </p>
+                    <p className="font-semibold text-slate-700 break-words">{item.val || "-"}</p>
                   </div>
                 ))}
               </div>
-              <div className="pt-2">
-                <p className="text-slate-400 text-xs uppercase font-bold">
-                  Address
+
+              <div className="pt-3 border-t border-slate-200/60">
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
+                  Registered Address
                 </p>
-                <p className="font-semibold">
-                  {preparedPayload.registeredAddress},{" "}
-                  {preparedPayload.stateName}, {preparedPayload.countryName} -{" "}
-                  {preparedPayload.zip}
+                <p className="font-semibold text-slate-700 leading-relaxed">
+                  {preparedPayload.registeredAddress}
+                  {preparedPayload.stateName ? `, ${preparedPayload.stateName}` : ""},{" "}
+                  {preparedPayload.countryName}
+                  {preparedPayload.zip ? ` - ${preparedPayload.zip}` : ""}
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200/60">
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
+                  Billing Address
+                </p>
+                <p className="font-semibold text-slate-700 leading-relaxed">
+                  {preparedPayload.billingAddress}
                 </p>
               </div>
             </div>
-            <div className="flex gap-4 w-full max-w-md">
-              <button
-                onClick={() => setShowPreview(false)}
-                className="flex-1 px-6 py-4 rounded-2xl border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50"
-              >
-                Go Back
-              </button>
-              <button
-                onClick={() => {
-                  onSave(preparedPayload);
-                  onClose();
-                }}
-                className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-200"
-              >
-                Confirm & Save
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+
+          {/* Preview footer — pinned */}
+          <div className="p-6 border-t border-slate-100 flex gap-4 shrink-0 bg-white rounded-b-3xl">
+            <button
+              type="button"
+              onClick={() => setShowPreview(false)}
+              className="flex-1 px-6 py-4 rounded-2xl border border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-colors"
+            >
+              Go Back
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onSave(preparedPayload);
+                console.log("Payload being sent:", preparedPayload);
+                onClose();
+              }}
+              className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+            >
+              Confirm & Save
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default ClientModal;

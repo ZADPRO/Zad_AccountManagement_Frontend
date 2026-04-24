@@ -109,6 +109,7 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
 
     const names = formData.fullName.trim().split(' ');
     const payload: any = {
+      userId: userId,
       username: formData.username,
       email: formData.email,
       firstName: names[0] || '',
@@ -187,7 +188,7 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
                   onChange={e => setFormData({...formData, roleId: Number(e.target.value)})}
                 >
                   <option value={1}>Admin</option>
-                  <option value={2}>User</option>
+                  <option value={2}>Manager</option>
                 </select>
               </div>
             </div>
