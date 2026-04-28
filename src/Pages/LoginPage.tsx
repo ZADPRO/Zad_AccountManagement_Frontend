@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import api from "@/api/api";
 import { useAuth } from "@/context/AuthContext"; 
-import { encrypt, decrypt } from  "@/Utils/encryptionHelper"
 
 
 const LoginPage = () => {

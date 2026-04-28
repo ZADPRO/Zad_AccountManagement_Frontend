@@ -3,7 +3,7 @@ import { type ClientListModel } from '@/types/clients';
 
 interface TableProps {
   data: ClientListModel[];
-  onDelete: (id: number) => void;
+  onDelete: (client: ClientListModel) => void;
   onEdit: (client: ClientListModel, mode: 'edit' | 'view') => void;
   isLoading?: boolean; // optional (nice UX)
 }
@@ -107,11 +107,7 @@ const { userRole } = useAuth();
                     {/* DELETE (Admin only) */}
                     {userRole === 'Admin' && (
                       <button 
-                        onClick={() => {
-                          if (window.confirm(`Delete ${client.name}?`)) {
-                            onDelete(client.clientId);
-                          }
-                        }}
+                        onClick={() => onDelete(client)}
                         className="p-2 hover:bg-red-50 hover:text-red-600 text-slate-400 rounded-lg transition-all"
                         title="Delete Client"
                       >

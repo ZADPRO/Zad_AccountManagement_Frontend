@@ -208,36 +208,21 @@ const ClientModal = ({
   );
   const isIndiaBilling = billingCountryObj?.name === "India";
 
+  // --- Updated Step 1 Validation ---
+  // --- Updated Step 1 Validation (Mandatory: Business Name, Mobile) ---
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
     if (isEditing && step === 1) {
+      // 1. Business Name
       if (!formData.name.trim()) newErrors.name = "required";
-      if (!isValidMobile(formData.mobileNumber))
-        newErrors.mobileNumber = "10 digits required";
-      if (!formData.email.trim()) {
-        newErrors.email = "required";
-      } else if (!isValidEmail(formData.email)) {
-        newErrors.email = "invalid format";
-      }
-      if (!formData.registeredAddress.trim())
-        newErrors.registeredAddress = "required";
-      if (!formData.registeredCountry)
-        newErrors.registeredCountry = "required";
-      if (
-        formData.registeredCountry === "India" &&
-        !formData.registeredState
-      ) {
-        newErrors.registeredState = "required";
-      }
-      if (!formData.zip.trim()) {
-        newErrors.zip = "required";
-      } else if (
-        formData.registeredCountry === "India" &&
-        !isValidZip(formData.zip)
-      ) {
-        newErrors.zip = "6 digits required";
+      
+      // 2. Mobile Number (10 digits)
+      if (!isValidMobile(formData.mobileNumber)) {
+        newErrors.mobileNumber = formData.mobileNumber.trim() === "" 
+          ? "required" 
+          : "10 digits required";
       }
     }
 
@@ -247,27 +232,25 @@ const ClientModal = ({
     }
 
     setErrors({});
-    setStep((prev) => prev + 1);
+    setStep(2);
   };
 
+  // --- Updated Step 2 Validation (Mandatory: Billing Addr, Country, State if India) ---
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalErrors: Record<string, string> = {};
 
+    // 3. Billing Address
     if (!formData.billingAddress.trim())
       finalErrors.billingAddress = "required";
-    if (!formData.billingCountryId)
+
+    // 4. Billing Country
+    if (!formData.billingCountryId || formData.billingCountryId === 0)
       finalErrors.billingCountryId = "required";
-    if (isIndiaBilling && !formData.billingStateId)
+
+    // 5. Billing State (Only if India)
+    if (isIndiaBilling && (!formData.billingStateId || formData.billingStateId === 0))
       finalErrors.billingStateId = "required";
-    if (
-      isIndiaBilling &&
-      formData.gstStatus === "Registered" &&
-      !formData.gstNumber.trim()
-    ) {
-      finalErrors.gstNumber = "required";
-    }
-    if (!formData.pan.trim()) finalErrors.pan = "required";
 
     if (Object.keys(finalErrors).length > 0) {
       setErrors(finalErrors);
@@ -276,6 +259,7 @@ const ClientModal = ({
 
     setErrors({});
 
+    // Payload remains the same, ensuring optional fields default to empty strings
     const payload = { 
       clientId: formData.id, 
       clientCode: formData.clientCode || generateClientCode(),
@@ -283,24 +267,20 @@ const ClientModal = ({
       businessName: formData.name,
       supplytypeid: getSupplyTypeId(formData.supplyType),
       clienttype: formData.supplyType === "Export" ? "Export" : "Direct",
-      email: formData.email || "",
+      email: formData.email || "", 
       mobilenumber: formData.mobileNumber,
-
-      // Registered Address
-      registeredAddress: formData.registeredAddress,
-      countryName: formData.registeredCountry,
-      stateName: formData.registeredState,
+      registeredAddress: formData.registeredAddress || "",
+      countryName: formData.registeredCountry || "India",
+      stateName: formData.registeredState || "",
       zip: Number(formData.zip) || 0,
-
-      // Billing + Tax
       billingAddress: formData.billingAddress,
       billingCountryId: formData.billingCountryId,
-      billingStateId: formData.billingStateId,
+      billingStateId: formData.billingStateId === 0 ? null : formData.billingStateId,
       gstnumber: isIndiaBilling ? formData.gstNumber : "",
-      pan: formData.pan,
+      pan: formData.pan || "",
       isexport: !isIndiaBilling,
       gststatus: isIndiaBilling ? formData.gstStatus : "URD",
-      tax_percentage: formData.taxPercentage,
+      tax_percentage: formData.taxPercentage || 0,
     };
 
     setPreparedPayload(payload);
@@ -379,7 +359,7 @@ const ClientModal = ({
                   </div>
 
                   <div className="space-y-1">
-                    <FieldLabel label="Email" fieldName="email" required />
+                    <FieldLabel label="Email" fieldName="email"/>
                     <input
                       type="email"
                       disabled={!isEditing}
@@ -400,7 +380,7 @@ const ClientModal = ({
                   </div>
 
                   <div className="col-span-2 space-y-1">
-                    <FieldLabel label="Registered Address" fieldName="registeredAddress" required />
+                    <FieldLabel label="Registered Address" fieldName="registeredAddress"/>
                     <textarea
                       disabled={!isEditing}
                       className={`${inputClass} h-16 py-2 text-sm resize-none ${errors.registeredAddress ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
@@ -410,7 +390,7 @@ const ClientModal = ({
                   </div>
 
                   <div className={formData.registeredCountry === "India" ? "col-span-1 space-y-1" : "col-span-2 space-y-1"}>
-                    <FieldLabel label="Country" fieldName="registeredCountry" required />
+                    <FieldLabel label="Country" fieldName="registeredCountry"/>
                     <select
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.registeredCountry ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
@@ -579,7 +559,7 @@ const ClientModal = ({
                   {/* PAN / Tax ID + Tax % */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <FieldLabel label={isIndiaBilling ? "PAN" : "Tax ID"} fieldName="pan" required />
+                      <FieldLabel label={isIndiaBilling ? "PAN" : "Tax ID"} fieldName="pan" />
                       <input
                         disabled={!isEditing}
                         className={`${inputClass} py-2 text-sm ${errors.pan ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}

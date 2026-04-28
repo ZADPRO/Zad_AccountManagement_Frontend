@@ -56,14 +56,40 @@ const UserManagement = () => {
       const res = isEdit 
         ? await api.put(endpoint, userData) 
         : await api.post(endpoint, userData);
-
+      
       if (res.status === 200 || res.status === 201) {
         setRefreshKey(prev => prev + 1);
         setIsModalOpen(false);
-       
+        toast.current?.show({
+          severity: 'success',
+          summary: isEdit ? 'User Updated' : 'User Created',
+          detail: isEdit 
+            ? 'User details updated successfully' 
+            : 'User created successfully',
+          life: 3000
+        });
       }
     } catch (err: any) {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: err.response?.data?.message || "Save failed" });
+       const errorMessage = err.response?.data?.message || "";
+
+    if (
+      errorMessage.includes("duplicate key") ||
+      errorMessage.includes("unique_email") ||
+      errorMessage.includes("SQLSTATE 23505")
+    ) {
+      toast.current?.show({ 
+        severity: 'warn',
+        summary: 'Duplicate Email', 
+        detail: 'This email is already registered. Please use a different one.',
+        life: 5000 
+      });
+    } else {
+      toast.current?.show({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: errorMessage || "Save failed" 
+      });
+    }  
     }
   };
 
@@ -84,6 +110,13 @@ const UserManagement = () => {
         setRefreshKey(prev => prev + 1);
         setIsDeleteOpen(false);
         setUserToDelete(null);
+
+        toast.current?.show({
+        severity: 'success',
+        summary: 'User Deleted',
+        detail: 'User deleted successfully',
+        life: 3000
+  });
        
       }
     } catch (err: any) {

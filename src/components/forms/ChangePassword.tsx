@@ -43,8 +43,7 @@ const ChangePassword = () => {
       // 🔥 THIS IS THE PART YOU ARE MISSING:
       completeFirstLogin(); // This updates the Context state to 'false'
       
-      // OR if you aren't using the helper function yet:
-      alert("Success! Redirecting to Dashboard...");
+      
       navigate("/dashboard", { replace: true });  // Now the router will see isFirstLogin is false and let you in
     }
   } catch (err) {

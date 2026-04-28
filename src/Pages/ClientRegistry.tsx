@@ -7,7 +7,7 @@ import ClientPreviewModal from '@/components/forms/ClientPreviewModal'; // New C
 import StatCard from '../components/ui/StatCard';
 import { type ClientListModel } from '../types/clients'; 
 import api from '@/api/api';
-
+import { Button } from 'primereact/button';
 const RecipientMaster = () => {
   const { userRole } = useAuth();
   const [clients, setClients] = useState<ClientListModel[]>([]);
@@ -18,7 +18,9 @@ const RecipientMaster = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // For Create/Edit
   const [isViewOpen, setIsViewOpen] = useState(false);   // For View Only
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [selectedClient, setSelectedClient] = useState<ClientListModel | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientListModel | null>(null); 
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<ClientListModel | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -80,32 +82,25 @@ const handleSave = async (clientData: any) => {
       console.error("Save client failed:", err.response?.data?.message || err.message);
     }
   };
-const handleDelete = async (id: number) => {
-  if (!window.confirm("Are you sure you want to delete this client?")) return;
+const triggerDelete = (client: ClientListModel) => {
+  setClientToDelete(client);
+  setIsDeleteOpen(true);
+}; 
+const confirmDeleteAction = async () => {
+  if (!clientToDelete) return;
 
   try {
-    // 1. Axios DELETE uses a config object as the second argument.
-    // The request body must be placed inside the 'data' property.
-    const res = await api.delete(`/clients/${id}`, {
-      data: {
-        deletedBy: 5 
-      }
+    const res = await api.delete(`/clients/${clientToDelete.clientId}`, {
+      data: { deletedBy: 5 }
     });
 
-    // 2. Axios throws an error for non-2xx responses, 
-    // so if we reach this line, the request was successful.
     if (res.status === 200 || res.status === 204) {
-      console.log("Client deleted");
-      
-      // Don't forget to trigger a refresh so the client disappears from your list
       setRefreshKey(prev => prev + 1);
+      setIsDeleteOpen(false);
+      setClientToDelete(null);
     }
-
   } catch (err: any) {
-    // 3. Axios captures the backend error message automatically
-    const errorMsg = err.response?.data?.message || "Delete error";
-    console.error("Delete failed:", errorMsg);
-    alert(errorMsg); 
+    console.error("Delete failed:", err.response?.data?.message || err.message);
   }
 };
 
@@ -143,7 +138,7 @@ const handleDelete = async (id: number) => {
 
       <Table
         data={filteredClients}
-        onDelete={handleDelete}
+        onDelete={triggerDelete}
         onEdit={(client, mode) => handleAction(client, mode)}
       />
 
@@ -162,8 +157,45 @@ const handleDelete = async (id: number) => {
         onClose={handleCloseAll} 
         clientId={selectedClient?.clientId} 
       />
+      {isDeleteOpen && (
+  <div className="fixed inset-0 z-110 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+    <div className="bg-white border border-slate-200 w-full max-w-sm rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-200 overflow-hidden">
+      <div className="p-8 text-center">
+        <div className="mx-auto w-14 h-14 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6">
+          <i className="pi pi-exclamation-triangle text-2xl" />
+        </div>
+
+        <h3 className="text-xl font-black tracking-tighter text-slate-900 mb-2">
+          Confirm Deletion
+        </h3>
+
+        <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+          Are you sure you want to delete{" "}
+          <span className="font-bold text-slate-700">
+            "{clientToDelete?.name}"
+          </span>?
+        </p>
+
+        <div className="flex gap-3">
+          <Button 
+            label="Cancel"
+            onClick={() => setIsDeleteOpen(false)}
+            className="flex-1 p-button-secondary p-button-text font-bold uppercase text-[10px] tracking-widest text-slate-400 border border-slate-200 rounded-2xl h-12"
+          />
+
+          <Button 
+            label="Delete"
+            onClick={confirmDeleteAction}
+            className="flex-1 bg-rose-500 text-white font-bold uppercase text-[10px] tracking-widest hover:bg-rose-600 shadow-lg shadow-rose-500/20 border-none rounded-2xl h-12"
+          />
+        </div>
+      </div>
     </div>
+  </div>
+)}
+    </div>  
   );
+  
 };
 
 export default RecipientMaster;
