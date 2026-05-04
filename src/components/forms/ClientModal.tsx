@@ -144,7 +144,7 @@ const ClientModal = ({
               id: clientDetails.clientId || clientId,
               clientCode: clientDetails.clientCode || "",
               name: clientDetails.name || clientDetails.businessName || "",
-              email: clientDetails.email || "",
+              email: clientDetails.email || null,
               mobileNumber:
                 clientDetails.mobilenumber || clientDetails.mobileNumber || "",
 
@@ -224,7 +224,12 @@ const ClientModal = ({
           ? "required" 
           : "10 digits required";
       }
-    }
+    } 
+    // 3. Email (optional but must be valid if entered)
+const email = formData.email?.trim(); 
+if (email && !isValidEmail(email)) {
+  newErrors.email = "invalid email";
+}
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);

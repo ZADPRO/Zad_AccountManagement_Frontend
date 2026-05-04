@@ -3,11 +3,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Shell from './components/layout/shell'; 
 import RecipientMaster from './Pages/ClientRegistry';
 import UserManagement from './Pages/UserManagement';
-import NewInvoice from './Pages/NewInvoice';
+import NewInvoice from './Pages/NewInvoice'; 
+ 
+
 import LoginPage from './Pages/LoginPage'; 
 import PendingInvoices from './Pages/PendingInvoices';
 import ChangePassword from './components/forms/ChangePassword'; // ✅ Ensure this is imported 
-import Dashboard from './Pages/Dashboard';
+import Dashboard from './Pages/Dashboard'; 
+
+import SettingsPage from './Pages/SettingsPage';
 
 const AppContent = () => {
   // ✅ Extract isFirstLogin directly from useAuth()
@@ -61,6 +65,8 @@ const AppContent = () => {
       <Route path="/recipient-master" element={<Shell><RecipientMaster /></Shell>} />
       <Route path="/invoices/new" element={<Shell><NewInvoice /></Shell>} />
       <Route path="/invoices/pending" element={<Shell><PendingInvoices /></Shell>} />
+      <Route path="/Settings" element={<Shell><SettingsPage /></Shell>} />
+      
       
       {/* Admin Only Route */}
       <Route 

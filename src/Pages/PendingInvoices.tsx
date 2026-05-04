@@ -3,6 +3,7 @@ import { FileText, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/ui/StatCard';
 import InvoiceListTable from '@/components/ui/invoiceTable';
+import InvoicePrint  from '@/Pages/PrintInvoice';
 import api from '@/api/api';
 
 // Define a type for your Invoices
@@ -23,11 +24,12 @@ const PendingInvoices = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // UI State management
-  const [, setIsModalOpen] = useState(false);
-  const [, setIsViewOpen] = useState(false);
-  const [, setModalMode] = useState<'create' | 'edit'>('create');
-  const [, setSelectedInvoice] = useState<InvoiceListModel | null>(null);
-
+ 
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isPrintMode, setIsPrintMode] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  
+  
   // Fetch Invoices
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -62,17 +64,16 @@ const PendingInvoices = () => {
 
   
 
-  const handleAction = (invoice: InvoiceListModel | null = null, mode: 'create' | 'edit' | 'view' = 'create') => {
-    setSelectedInvoice(invoice);
-    if (mode === 'view') {
-      setIsViewOpen(true);
-      setIsModalOpen(false);
-    } else {
-      setModalMode(mode as 'create' | 'edit');
-      setIsModalOpen(true);
-      setIsViewOpen(false);
-    }
-  };
+const handleView = (invoice: InvoiceListModel) => {
+  setSelectedInvoiceId(invoice.id);
+  setIsPrintMode(false);
+  setIsViewOpen(true);
+};
+const handlePrint = (invoice: InvoiceListModel) => {
+  setSelectedInvoiceId(invoice.id);
+  setIsPrintMode(true);
+  setIsViewOpen(true);
+};
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Void this invoice? This action cannot be undone.")) return;
@@ -140,24 +141,42 @@ const PendingInvoices = () => {
         </div>
       </div>
 
-      {/* Invoice Table Container */}
-      <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow p-4">
         {isLoading ? (
-          <div className="py-20 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-400 font-medium">Fetching invoices...</p>
-          </div>
+          <p>Loading...</p>
         ) : (
           <InvoiceListTable
             data={filteredInvoices}
-            onView={(inv) => handleAction(inv, 'view')}
-            onEdit={(inv) => handleAction(inv, 'edit')}
+            onView={handleView}
+            onPrint={handlePrint}
             onDelete={handleDelete}
           />
         )}
       </div>
 
-     
+      {/* ✅ MODAL */}
+     {isViewOpen && selectedInvoiceId && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    <div className="bg-white w-\[900px]\ max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-4 relative">
+
+      {/* Close Button */}
+      <button
+        onClick={() => setIsViewOpen(false)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
+      >
+        ✕
+      </button>
+
+      {/* 👇 THIS IS THE IMPORTANT PART */}
+      <InvoicePrint 
+        invoiceId={selectedInvoiceId} 
+        autoPrint={isPrintMode}   // NEW PROP
+      />
+
+    </div>
+  </div>
+)}
     </div>
   );
 };

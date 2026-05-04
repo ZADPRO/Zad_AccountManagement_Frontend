@@ -13,20 +13,25 @@ const Sidebar = () => {
       </div>
       <div className="flex-1 overflow-y-auto py-1 space-y-5">
         
-        <div>
-          
+        <div> 
           <nav className="space-y-1 px-4">
             <SidebarItem icon="pi-home" label="Dashboard" to="/dashboard" />
+          </nav>
+        </div>
+
+        <div> 
+          <nav className="space-y-1 px-4">
+            <SidebarItem icon="pi-home" label="Settings" to="/Settings" />
           </nav>
         </div>
  
           <nav className="space-y-1 px-4">
             <SidebarItem icon="pi-plus-circle" label="New Invoice" to="/invoices/new" />
           </nav>
+          
           <nav className="space-y-1 px-4">
             <SidebarItem icon="pi-clock" label="Pending Invoices" to="/invoices/pending" />
-          </nav>
-        
+          </nav>        
           <nav className="space-y-1 px-4">
             <SidebarItem icon="pi-users" label="Clients" to="/recipient-master" />
           </nav>

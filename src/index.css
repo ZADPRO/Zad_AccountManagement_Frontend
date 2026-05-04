@@ -9,4 +9,38 @@
 .no-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+} 
+
+/* FORCE sidebar to use full height */
+.p-sidebar {
+  height: 100vh !important;
+  display: flex;
+  flex-direction: column;
+  transform: none !important;
+  transition: opacity 0.3s ease-in-out !important;
+}
+
+/* FIX the internal content wrapper */
+.p-sidebar-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 0 !important; /* remove default padding */
+} 
+
+/* Ensure the dropdown overlay is always on top of other sidebar inputs */
+.p-dropdown-panel {
+    z-index: 2000 !important;
+    background: #ffffff !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    border-radius: 12px !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+/* Add margin to the dropdown items for a cleaner SaaS look */
+.p-dropdown-item {
+    padding: 12px 20px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
 }
