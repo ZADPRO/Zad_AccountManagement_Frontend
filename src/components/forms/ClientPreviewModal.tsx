@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Loader2, AlertCircle, Building2, MapPin, ReceiptIndianRupee, Globe } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { X,  Loader2, AlertCircle, Building2, MapPin, ReceiptIndianRupee } from 'lucide-react';
 import api from '@/api/apitest';
 
 interface ViewClientProps {

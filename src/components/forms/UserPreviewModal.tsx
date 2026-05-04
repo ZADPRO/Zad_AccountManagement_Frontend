@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { X, UserCheck, Loader2, AlertCircle, Shield, Calendar } from 'lucide-react';
 import api from '@/api/api';
 interface ViewUserProps {

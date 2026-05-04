@@ -5,7 +5,7 @@ import api from '@/api/api';
 import { useAuth } from '@/context/AuthContext';
 
 const ChangePassword = () => {
-  const { completeFirstLogin, userId } = useAuth();
+  const { completeFirstLogin } = useAuth();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

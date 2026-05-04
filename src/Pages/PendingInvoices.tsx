@@ -35,7 +35,7 @@ const PendingInvoices = () => {
     const fetchInvoices = async () => {
       setIsLoading(true);
       try {
-        const token = sessionStorage.getItem('token');
+        // const token = sessionStorage.getItem('token');
         const res = await api.get('/invoices');
         
         

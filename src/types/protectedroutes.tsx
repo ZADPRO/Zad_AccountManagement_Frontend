@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import React, { type ReactElement } from 'react';
+import React from 'react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { isLoggedIn, isFirstLogin, loading } = useAuth();

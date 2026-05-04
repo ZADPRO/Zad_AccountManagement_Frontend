@@ -198,7 +198,7 @@ const ClientModal = ({
   if (!isOpen) return null;
 
   const isValidMobile = (num: string) => /^[0-9]{10}$/.test(num);
-  const isValidZip = (zip: string) => /^[0-9]{6}$/.test(zip);
+  // const isValidZip = (zip: string) => /^[0-9]{6}$/.test(zip);
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
