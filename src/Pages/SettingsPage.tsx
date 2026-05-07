@@ -57,23 +57,28 @@ const SettingsPage: React.FC = () => {
                 setLoading(false);
             }
         };
-        const fetchFields = async () => {
-        try {
-            const res = await api.get('/custom-fields');
-            if (res.data?.status) {
-                const fields = (res.data.fields || []).map((f: any) => ({
-                    id: f.fieldId,
-                    label: f.fieldLabel,
-                    type: f.fieldType,
-                    isRequired: f.isRequired,
-                    active: true 
-                }));
-                setCustomFields(fields);
-            }
-        } catch (err) {
-            console.error("Error fetching custom fields:", err);
-        }
-    };
+const fetchFields = async () => {
+    try {
+        const res = await api.get('/custom-fields');
+        console.log("Full Response Object:", res);
+
+        // FIX: Access 'fields' instead of 'data' based on your console output
+        const rawData = res.data?.fields || []; 
+        
+        const fieldslist = rawData.map((f: any) => ({
+            id: String(f.fieldId),
+            label: f.fieldLabel, 
+            type: f.fieldType,
+            isRequired: f.isRequired,
+            // You can check if the field is deleted or active here
+            active: !f.deletedAt 
+        }));
+
+        setCustomFields(fieldslist);
+    } catch (err) {
+        console.error("Error fetching custom fields:", err);
+    }
+};
         fetchBanks();
         fetchFields();
     }, []
@@ -139,25 +144,27 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
     }
 }; 
 
-const handleSaveField = (apiResponse: any) => {
-    const res = apiResponse.data || apiResponse; // ✅ handle both cases
+const handleSaveField = (decryptedResponse: any) => {
+    // 1. Extract the data object from the response wrapper
+    const data = decryptedResponse.data || decryptedResponse;
 
-    if (!res?.fieldId) {
-        console.error("Invalid response:", res);
-        return;
-    }
+    // 2. Map the backend response to the CustomField interface
+    const newField: CustomField = {
+        id: String(data.fieldId),      // Backend 'fieldId' -> Frontend 'id'
+        label: data.fieldLabel,        // Backend 'fieldLabel' -> Frontend 'label'
+        type: data.fieldType as 'Text' | 'Date' | 'Number',
+        isRequired: Boolean(data.isRequired),
+        active: true                   // Newly created fields are active by default
+    };
 
-    setCustomFields((prev) => [
-        ...prev,
-        {
-            id: String(res.fieldId),   // 👈 convert to string (important)
-            label: res.fieldLabel || "",  // backend doesn't return label
-            type: res.fieldType || "Text",
-            isRequired: res.isRequired || false,
-            active: true
-        }
-    ]);
+    // 3. Update state to reflect the new field in the UI immediately
+    setCustomFields((prev) => [...prev, newField]);
+    
+    // 4. Close the sidebar/modal
+    setIsFieldSidebarOpen(false);
 };
+
+    
 const handleDeleteField = async (id: string) => {
     if (!window.confirm("Delete this field? Existing invoices won't be affected.")) return;
     try {

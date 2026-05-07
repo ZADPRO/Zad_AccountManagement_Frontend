@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import api from "@/api/api";
+import CustomFields from "../components/invoice/CustomInvoiceFields";
 // ── Types matching your Go InvoiceResponse ──
+
+interface CustomField {
+  fieldId: number;
+  label: string;  
+  value: string;
+}
 interface InvoiceItem {
   itemid: number;
   description: string;
@@ -39,6 +46,7 @@ interface InvoiceResponse {
   paymentstatus: string;
   client: ClientInfo;
   items: InvoiceItem[];
+  customFields?: CustomField[];
 }
 
 interface Props {
@@ -60,7 +68,7 @@ function numberToWords(num: number): string {
 }
 
 const fmt = (n: number) =>
-  `CHF ${Number(n).toLocaleString("en-CH", { minimumFractionDigits: 2 })}`;
+  `INR ${Number(n).toLocaleString("en-CH", { minimumFractionDigits: 2 })}`;
 
 // ── Component ──
 export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
@@ -71,7 +79,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
 
   useEffect(() => {
     if (!invoiceId) return;
-
+    
     const fetchInvoice = async () => {
       try {
         setLoading(true);
@@ -85,9 +93,28 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         });
 
         // ✅ handle both formats safely
-        const data = res.data.data || res.data;
+        const raw = res.data.data || res.data;
+        console.log(res)
+const data = {
+  ...raw,
 
-        setInvoice(data);
+  items: (raw.items || []).map((item: any) => ({
+    itemid: item.itemid ?? item.ItemID,
+    description: item.description ?? item.Description,
+    quantity: item.quantity ?? item.Quantity,
+    unitprice: item.unitprice ?? item.UnitPrice,
+    linetotal: item.linetotal ?? item.LineTotal,
+  })),
+
+ customFields: (raw.customFields || raw.CustomFields || []).map((f: any) => ({
+  fieldId: f.fieldId ?? f.FieldID,
+  label: f.label ?? f.Label ?? `Field ${f.fieldId}`,  // ← add this
+  value: f.value ?? f.Value,
+})),
+};
+
+setInvoice(data);
+       
       } catch (err: any) {
         console.error(err);
         setError(err?.response?.data?.message || "Failed to fetch invoice");
@@ -98,6 +125,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
 
     fetchInvoice();
   }, [invoiceId]);
+
   useEffect(() => {
   if (autoPrint && invoice) {
     setTimeout(() => {
@@ -169,7 +197,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
   if (error)   return <div style={{ padding: 20, color: "red" }}>Error: {error}</div>;
   if (!invoice) return <div style={{ padding: 20 }}>Invoice not found</div>;
 
-  const totalWords = numberToWords(Math.floor(invoice.grandtotal)) + " Swiss Francs Only";
+  const totalWords = numberToWords(Math.floor(invoice.grandtotal)) + "Rupees Only";
 
   return (
     <div>
@@ -274,7 +302,31 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
             )}
           </tbody>
         </table>
+            {invoice.customFields && invoice.customFields.length > 0 && (
+  <>
+    <div style={{
+      background:"#1a5276",
+      color:"white",
+      padding:"5px 14px",
+      fontSize:12,
+      fontWeight:"bold"
+    }}>
+      Additional Details
+    </div>
 
+    <div style={{
+      padding:"10px 14px",
+      fontSize:12,
+      lineHeight:1.6
+    }}>
+     {invoice.customFields.map((field, index) => (
+  <div key={index}>
+    <strong>{field.label}:</strong> {field.value}
+  </div>
+))}
+    </div>
+  </>
+)}
         {/* Totals */}
         <div>
           {/* Sub Total */}

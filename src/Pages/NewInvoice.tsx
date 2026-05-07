@@ -5,7 +5,21 @@ import InvoiceSummary from '../components/invoice/InvoiceSummary';
 import { type ClientListModel } from '@/types/clients';
 import { useNavigate } from 'react-router-dom'; 
 import api from '@/api/api';
+import CustomFields from "../components/invoice/CustomInvoiceFields";
 
+interface CustomFieldDefinition {
+  id: number;
+  label: string;
+  type: string;
+  isRequired?: boolean;
+  active?: boolean;
+}
+
+interface CustomFieldValue {
+  fieldId: number;
+  label: string;
+  value: string;
+}
 const NewInvoice = () => {
   const navigate = useNavigate();
   const MY_BUSINESS_STATE = "Tamil Nadu"; 
@@ -34,8 +48,10 @@ const NewInvoice = () => {
   const gstAmount = (subtotal * activeTaxRate) / 100;
   const tdsAmount = (subtotal * tdsRate) / 100;
   const grandTotal = subtotal + gstAmount - tdsAmount;
-
-  // --- Handlers ---
+  // ✅ Custom Fields
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDefinition[]>([]);
+  const [selectedCustomFields, setSelectedCustomFields] = useState<CustomFieldValue[]>([]);
+ 
 
 const handleGenerateInvoice = async () => {
     // 1. Validations remain purely frontend logic
@@ -59,14 +75,21 @@ const handleGenerateInvoice = async () => {
         quantity: item.quantity,
         unitprice: item.rate, 
         linetotal: item.amount 
+      })),
+       // ✅ Custom Fields
+     customValues: selectedCustomFields.map(field => ({
+        fieldId: field.fieldId,
+        label: field.label,
+        value: field.value
       }))
     };
 
     try {
       // 3. Axios POST request
       // No need for full URL, manual token retrieval, or JSON.stringify
+     console.log(JSON.stringify(payload, null, 2));
       const res = await api.post('/invoices', payload);
-
+      
       // 4. Handle response (Axios puts data in res.data)
       if (res.data.status) {
         alert("Invoice Created!");
@@ -150,70 +173,124 @@ useEffect(() => {
   }, [selectedClientId]);
 
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
-      <header className="flex justify-between items-end mb-10">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-slate-900">
-            <FileText className="text-blue-600" /> New Invoice
-          </h1>
-        </div>
-        <div className="flex gap-3">
-          <button 
-            disabled={isSubmitting}
-            onClick={handleGenerateInvoice}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
-          >
-            <Send size={16} /> {isSubmitting ? 'Generating...' : 'Generate e-Invoice'}
-          </button>
-        </div>
-      </header>
+   
 
-      <div className="grid grid-cols-3 gap-8">
-        <div className="col-span-2 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              {/* Client Selection */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Selection</label>
-                <select 
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                >
-                  <option value="">Select a Client...</option>
-                  {clients.map((client) => (
-                    <option key={client.clientId} value={client.clientId}>{client.name}</option>
-                  ))}
-                </select>
-              </div>
+useEffect(() => {
+        const fetchFields = async () => {
+            try {
+                const res = await api.get('/custom-fields');
+                
+                // Accessing 'fields' as seen in your Axios log
+                const rawData = res.data?.fields || []; 
+                
+                const fieldslist = rawData.map((f: any) => ({
+  fieldId: f.fieldId,       
+  fieldLabel: f.fieldLabel,  
+  fieldType: f.fieldType,
+  isRequired: f.isRequired
+}));
+               
+                setCustomFieldDefs(fieldslist);
+            } catch (err) {
+                console.error("Error fetching custom fields:", err);
+            }
+        };
 
-              {/* Date Input */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invoice Date</label>
-                <input 
-                  type="date" 
-                  value={invoiceDate}
-                  onChange={(e) => setInvoiceDate(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-900 outline-none focus:border-blue-500 transition-all" 
-                />
-              </div>
+        fetchFields();
+    }, []);
+
+    
+
+ return (
+  <div className="p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
+    
+    {/* Header */}
+    <header className="flex justify-between items-end mb-10">
+      <div>
+        <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-slate-900">
+          <FileText className="text-blue-600" /> New Invoice
+        </h1>
+      </div>
+
+      <div className="flex gap-3">
+        <button 
+          disabled={isSubmitting}
+          onClick={handleGenerateInvoice}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+        >
+          <Send size={16} /> {isSubmitting ? 'Generating...' : 'Generate e-Invoice'}
+        </button>
+      </div>
+    </header>
+
+    {/* Main Grid */}
+    <div className="grid grid-cols-3 gap-8">
+
+      {/* LEFT SIDE */}
+      <div className="col-span-2 space-y-6">
+        
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+          
+          {/* Client + Date */}
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Client Selection
+              </label>
+              <select 
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
+              >
+                <option value="">Select a Client...</option>
+                {clients.map((client) => (
+                  <option key={client.clientId} value={client.clientId}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <InvoiceItemsTable items={items} onItemsChange={setItems} />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Invoice Date
+              </label>
+              <input 
+                type="date" 
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-900 outline-none focus:border-blue-500 transition-all"
+              />
+            </div>
+
           </div>
+
+          {/* Items */}
+          <InvoiceItemsTable items={items} onItemsChange={setItems} />
+
         </div>
 
-        <div className="space-y-6">
-          <InvoiceSummary 
-            subtotal={subtotal}
-            taxRate={activeTaxRate}
-            tdsRate={tdsRate}
-            isInterState={isInterState}
-          />
-        </div>
+        {/* ✅ Custom Fields (correct placement) */}
+        <CustomFields
+          fieldDefs={customFieldDefs}
+          onChange={setSelectedCustomFields}
+        />
+
       </div>
+
+      {/* RIGHT SIDE */}
+      <div className="space-y-6">
+        <InvoiceSummary 
+          subtotal={subtotal}
+          taxRate={activeTaxRate}
+          tdsRate={tdsRate}
+          isInterState={isInterState}
+        />
+      </div>
+
     </div>
-  );
-}; 
+  </div>
+);
+}
 export default NewInvoice;
