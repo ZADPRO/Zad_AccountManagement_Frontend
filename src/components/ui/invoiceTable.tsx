@@ -27,13 +27,13 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
 
   return (
     <div className="w-full">
-
+      <div className="w-full overflow-y-auto max-h-[600px]">
       {/* Table */}
       <table className="w-full text-left border-collapse">
 
         {/* Header */}
-        <thead>
-          <tr className="border-b border-slate-100 bg-slate-50/50">
+        <thead className="sticky top-0 z-10">
+          <tr className="border-b border-slate-100 bg-slate-50">
             <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Invoice / ID</th>
             <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Client</th>
             <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Amount</th>
@@ -54,7 +54,7 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
               {/* Invoice */}
               <td className="py-5 px-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white border border-slate-100 rounded-lg shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
+                  <div className="p-2 bg-white border border-slate-500 rounded-lg shadow-sm text-blue-600 group-hover:scale-110 transition-transform">
                     <FileText size={16} />
                   </div>
                   <div>
@@ -151,6 +151,7 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
         </div>
       )}
 
+    </div>
     </div>
   );
 };

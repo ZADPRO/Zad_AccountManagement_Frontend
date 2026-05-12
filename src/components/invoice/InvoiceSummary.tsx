@@ -2,15 +2,27 @@ import { IndianRupee, ShieldCheck } from 'lucide-react';
 
 interface InvoiceSummaryProps {
   subtotal: number;
-  taxRate: number; // e.g., 18
-  tdsRate: number; // e.g., 2
-  isInterState: boolean; // For GST logic
+  taxRate: number; 
+  tdsRate: number; 
+  isInterState: boolean; 
+  currency: string;
 }
 
-const InvoiceSummary = ({ subtotal, taxRate, tdsRate, isInterState }: InvoiceSummaryProps) => {
+const InvoiceSummary = ({ subtotal, taxRate, tdsRate, isInterState,currency, }: InvoiceSummaryProps) => {
   const gstAmount = (subtotal * taxRate) / 100;
   const tdsAmount = (subtotal * tdsRate) / 100;
   const grandTotal = subtotal + gstAmount - tdsAmount;
+ 
+
+  const currencySymbols: Record<string, string> = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
+const currencySymbol = currencySymbols[currency] || currency;
+
 
   return (
     <div className="space-y-6">
@@ -26,31 +38,31 @@ const InvoiceSummary = ({ subtotal, taxRate, tdsRate, isInterState }: InvoiceSum
         <div className="space-y-5">
           <div className="flex justify-between items-center text-sm">
             <span className="text-slate-500 font-medium">Total Taxable Value</span>
-            <span className="font-bold text-slate-900">₹{subtotal.toLocaleString()}</span>
+            <span className="font-bold text-slate-900">{currencySymbol}{subtotal.toLocaleString()}</span>
           </div>
 
           {/* GST Logic: Using Emerald-600 for high-contrast visibility */}
           {isInterState ? (
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-500 font-medium">IGST ({taxRate}%)</span>
-              <span className="font-bold text-emerald-600">+ ₹{gstAmount.toLocaleString()}</span>
+              <span className="font-bold text-emerald-600">+{currencySymbol}{gstAmount.toLocaleString()}</span>
             </div>
           ) : (
             <>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">CGST ({taxRate / 2}%)</span>
-                <span className="font-bold text-emerald-600">+ ₹{(gstAmount / 2).toLocaleString()}</span>
+                <span className="font-bold text-emerald-600">+{currencySymbol}{(gstAmount / 2).toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">SGST ({taxRate / 2}%)</span>
-                <span className="font-bold text-emerald-600">+ ₹{(gstAmount / 2).toLocaleString()}</span>
+                <span className="font-bold text-emerald-600">+ {currencySymbol}{(gstAmount / 2).toLocaleString()}</span>
               </div>
             </>
           )}
 
           <div className="flex justify-between items-center text-sm">
             <span className="text-slate-500 font-medium">TDS Deduction ({tdsRate}%)</span>
-            <span className="font-bold text-rose-600">- ₹{tdsAmount.toLocaleString()}</span>
+            <span className="font-bold text-rose-600">- {currencySymbol}{tdsAmount.toLocaleString()}</span>
           </div>
 
           {/* Grand Total Section */}
@@ -58,7 +70,7 @@ const InvoiceSummary = ({ subtotal, taxRate, tdsRate, isInterState }: InvoiceSum
             <div>
               <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 block mb-1">Final Amount</span>
               <span className="text-4xl font-black text-slate-900 leading-none tracking-tighter">
-                ₹{grandTotal.toLocaleString()}
+                {currencySymbol}{grandTotal.toLocaleString()}
               </span>
             </div>
             

@@ -1,4 +1,8 @@
-import { Plus, Trash2 } from 'lucide-react'; 
+import { Plus, Trash2 } from "lucide-react";
+
+/* =========================================================
+   INTERFACES
+========================================================= */
 
 interface Item {
   id: string;
@@ -6,109 +10,268 @@ interface Item {
   quantity: number;
   rate: number;
   amount: number;
+  customFieldValues: {
+    fieldId: number;
+    label: string;
+    value: string;
+  }[];
+  [key: string]: any;
+}
+
+interface CustomFieldValue {
+  fieldId: number;
+  label: string;
+  value: string;
 }
 
 interface Props {
   items: Item[];
   onItemsChange: (items: Item[]) => void;
+  customFields?: CustomFieldValue[]; // ← user-selected fields from CustomFields component
+  currency: string;
 }
 
-const InvoiceItemsTable = ({ items, onItemsChange }: Props) => {
+/* =========================================================
+   COMPONENT
+========================================================= */
+
+const InvoiceItemsTable = ({
+  items,
+  onItemsChange,
+  customFields = [], // ← matches what parent passes
+  currency,
+}: Props) => {
+
+  /* =========================================================
+     ADD ITEM
+  ========================================================= */
+
   const addItem = () => {
-    const newItem = { id: Date.now().toString(), description: '', quantity: 1, rate: 0, amount: 0 };
-    onItemsChange([...items, newItem]);
+    // Pre-populate dynamic keys for each selected custom field
+    const dynamicFields = customFields.reduce((acc: any, field) => {
+      acc[field.fieldId] = "";
+      return acc;
+    }, {});
+
+    onItemsChange([
+      ...items,
+      {
+        id: Date.now().toString(),
+        description: "",
+        quantity: 1,
+        rate: 0,
+        amount: 0,
+        customFieldValues: [],
+        ...dynamicFields,
+      },
+    ]);
   };
+
+  /* =========================================================
+     REMOVE ITEM
+  ========================================================= */
 
   const removeItem = (id: string) => {
-    if (items.length > 1) {
-      onItemsChange(items.filter(item => item.id !== id));
-    }
+    if (items.length <= 1) return;
+    onItemsChange(items.filter((item) => item.id !== id));
   };
 
-  const updateItem = (id: string, field: keyof Item, value: string | number) => {
-    const updatedItems = items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        updatedItem.amount = Number(updatedItem.quantity) * Number(updatedItem.rate);
-        return updatedItem;
-      }
-      return item;
+  /* =========================================================
+     UPDATE ITEM
+  ========================================================= */
+
+  const updateItem = (id: string, field: string, value: any) => {
+    const updatedItems = items.map((item) => {
+      if (item.id !== id) return item;
+
+      const updatedItem = {
+  ...item,
+  [field]: value,
+};
+
+const quantity = Math.max(
+  1,
+  Number(updatedItem.quantity)
+);
+
+const rate = Math.max(
+  0,
+  Number(updatedItem.rate)
+);
+
+updatedItem.quantity = quantity;
+updatedItem.rate = rate;
+
+updatedItem.amount = quantity * rate;
+
+/* =====================================================
+   HANDLE CUSTOM FIELD VALUES
+===================================================== */
+
+const fieldId = Number(field);
+
+// check if dynamic custom column
+if (!isNaN(fieldId)) {
+
+  const existingField =
+    updatedItem.customFieldValues.find(
+      (f) => f.fieldId === fieldId
+    );
+
+  if (existingField) {
+
+    // UPDATE existing value
+    existingField.value = value;
+
+  } else {
+
+    // FIND COLUMN DETAILS
+    const column = customFields.find(
+      (f) => f.fieldId === fieldId
+    );
+
+    if (column) {
+
+      // ADD NEW VALUE
+      updatedItem.customFieldValues.push({
+        fieldId: column.fieldId,
+        label: column.label,
+        value: value,
+      });
+    }
+  }
+}
+
+return updatedItem;
+
+      
     });
+
     onItemsChange(updatedItems);
   };
 
+  /* =========================================================
+     JSX
+  ========================================================= */
+
   return (
-    <div className="mt-8">
-      {/* 1. Scrollable Container Wrapper */}
-      <div className="max-h-105 overflow-y-auto overflow-x-hidden pr-2 no-scollbar ">
-        <table className="w-full text-left border-collapse">
-          {/* 2. Sticky Header to keep titles visible while scrolling */}
-          <thead className="sticky top-0 bg-white z-20 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
-            <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <th className="py-4 px-2">Description</th>
-              <th className="py-4 px-2 w-24">Qty</th>
-              <th className="py-4 px-2 w-32">Rate</th>
-              <th className="py-4 px-2 w-32">Amount</th>
-              <th className="py-4 px-2 w-10"></th>
+    <div className="mt-6">
+
+      {/* TABLE CONTAINER */}
+      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+        <table className="w-full border-collapse text-left">
+
+          {/* TABLE HEADER */}
+          <thead className="bg-slate-50 sticky top-0 z-20">
+            <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+
+              <th className="py-4 px-3 min-w-[250px]">Description</th>
+              <th className="py-4 px-3 w-24">Qty</th>
+              <th className="py-4 px-3 w-36">Rate ({currency})</th>
+
+              {/* One <th> per user-selected custom field */}
+              {customFields.map((col) => (
+                <th key={col.fieldId} className="py-4 px-3 min-w-[180px]">
+                  {col.label}
+                </th>
+              ))}
+
+              <th className="py-4 px-3 w-40">Amount ({currency})</th>
+              <th className="py-4 px-3 w-14"></th>
+
             </tr>
           </thead>
-          
-          <tbody className="divide-y divide-slate-50">
+
+          {/* TABLE BODY */}
+          <tbody className="divide-y divide-slate-100 bg-white">
             {items.map((item) => (
-              <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                <td className="py-4 px-2">
-                  <input 
+              <tr key={item.id} className="hover:bg-slate-50 transition-all">
+
+                {/* DESCRIPTION */}
+                <td className="py-3 px-3">
+                  <input
                     type="text"
-                    className="w-full bg-transparent border-none text-slate-900 font-medium outline-none placeholder:text-slate-400"
-                    placeholder="Service name..."
                     value={item.description}
-                    onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                    placeholder="Service / Product"
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                   />
                 </td>
 
-                <td className="py-4 px-2">
-                  <input 
+                {/* QUANTITY */}
+                <td className="py-3 px-3">
+                  <input
                     type="number"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 text-slate-900 font-bold focus:bg-white focus:border-blue-500 transition-all outline-none"
+                    min={1}
                     value={item.quantity}
-                    onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))
+                    }
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                   />
                 </td>
 
-                <td className="py-4 px-2">
-                  <input 
+                {/* RATE */}
+                <td className="py-3 px-3">
+                  <input
                     type="number"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 text-slate-900 font-bold focus:bg-white focus:border-blue-500 transition-all outline-none"
+                    min={0}
                     value={item.rate}
-                    onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      updateItem(item.id, "rate", Math.max(0, parseFloat(e.target.value) || 0))
+                    }
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                   />
                 </td>
 
-                <td className="py-4 px-2 text-sm font-black text-slate-900">
-                  ₹{item.amount.toLocaleString()}
+                {/* One <td> per user-selected custom field — single map, no nesting */}
+                {customFields.map((col) => (
+                  <td key={col.fieldId} className="py-3 px-3">
+                    <input
+                      type="text"
+                      value={item[col.fieldId] ?? ""}
+                      onChange={(e) => updateItem(item.id, String(col.fieldId), e.target.value)}
+                      placeholder={col.label}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    />
+                  </td>
+                ))}
+
+                {/* AMOUNT */}
+                <td className="py-3 px-3">
+                  <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                    {item.amount.toFixed(2)}
+                  </div>
                 </td>
 
-                <td className="py-4 px-2 text-right">
-                  <button 
-                    onClick={() => removeItem(item.id)} 
-                    className="text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
+                {/* DELETE */}
+                <td className="py-3 px-3 text-center">
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="text-slate-400 hover:text-red-500 transition-all"
                   >
                     <Trash2 size={16} />
                   </button>
                 </td>
+
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
 
-      {/* Add Button remains outside the scroll area so it's always visible */}
-      <button 
+      {/* ADD ITEM BUTTON */}
+      <button
+        type="button"
         onClick={addItem}
-        className="mt-6 flex items-center gap-2 text-[10px] font-black text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-[0.2em]"
+        className="mt-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-all"
       >
-        <Plus size={14} strokeWidth={3} /> Add Line Item
+        <Plus size={14} />
+        Add Item
       </button>
+
     </div>
   );
 };

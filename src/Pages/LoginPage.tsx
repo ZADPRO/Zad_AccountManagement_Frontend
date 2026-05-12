@@ -62,15 +62,17 @@ const LoginPage = () => {
       <div className="relative flex flex-col bg-white border border-slate-200 rounded-[2.5rem] p-12 shadow-2xl shadow-slate-200/50 w-full max-w-md mx-4">
         
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg rotate-3 hover:rotate-0 transition-transform">
-            <span className="text-white text-2xl font-black italic">AM</span>
-          </div>
-          <h1 className="text-3xl text-slate-900 font-black tracking-tighter">
+  <div className="mb-8 flex justify-center">
+  <img 
+    src="/LOGO.PNG" 
+    alt="ZAdroit IT Solutions" 
+    className="h-auto w-40 md:w-50 object-contain" 
+  />
+</div>
+
+          <h1 className="text-[27px] text-slate-900 font-black tracking-tighter">
             AccountManager
           </h1>
-          <p className="text-slate-400 text-[10px] uppercase tracking-[0.2em] mt-3 font-bold">
-            Internal Secure Access
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -39,7 +39,8 @@ const SettingsPage: React.FC = () => {
     const [loading, setLoading] = useState(false); 
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [isFieldSidebarOpen, setIsFieldSidebarOpen] = useState(false);
-    
+    const [refreshKey, setRefreshKey] = useState(0);
+
     useEffect(() => {
         const fetchBanks = async () => {
             setLoading(true);
@@ -56,7 +57,10 @@ const SettingsPage: React.FC = () => {
             } finally {
                 setLoading(false);
             }
-        };
+        }; 
+         
+
+
 const fetchFields = async () => {
     try {
         const res = await api.get('/custom-fields');
@@ -122,6 +126,7 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
     });
 };
 
+
     const toggleField = (id: string) => {
         setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
     }; 
@@ -142,7 +147,8 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
         console.error("Delete request failed:", err);
         alert("Could not delete the bank account. Please try again.");
     }
-}; 
+};
+ 
 
 const handleSaveField = (decryptedResponse: any) => {
     // 1. Extract the data object from the response wrapper
@@ -164,7 +170,6 @@ const handleSaveField = (decryptedResponse: any) => {
     setIsFieldSidebarOpen(false);
 };
 
-    
 const handleDeleteField = async (id: string) => {
     if (!window.confirm("Delete this field? Existing invoices won't be affected.")) return;
     try {
@@ -232,9 +237,11 @@ const handleDeleteField = async (id: string) => {
                                     onClick={() => {
             setSelectedBank(bank); 
             setIsBankSidebarOpen(true);
+            
         }}
                                     className="p-3 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
                                         <Edit2 size={18} />
+                                        
                                     </button>
                                     <button 
                                     onClick={() => {
@@ -243,7 +250,7 @@ const handleDeleteField = async (id: string) => {
                 handleDelete(bank.id);
             }
         }}
-                                    className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+             className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
@@ -262,11 +269,10 @@ const handleDeleteField = async (id: string) => {
                 setIsBankSidebarOpen(false);
                 setSelectedBank(null); // 💡 Crucial: Reset to null so "Add" mode works next time
                 }}
-                onSave={handleSaveBank}
+               onSave={handleSaveBank}
                 loading={loading}
                 initialData={selectedBank} // For Edit Mode logic
             /> 
-
             {/* --- Custom Fields Section --- */}
 <section>
     <div className="flex items-center justify-between mb-8">

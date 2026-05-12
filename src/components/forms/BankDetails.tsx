@@ -3,8 +3,10 @@ import { Sidebar } from 'primereact/sidebar';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
-import { Landmark, X, Check } from 'lucide-react';
-import api from '@/api/api'; 
+import { Landmark, X, Check, UploadCloud, FileImage } from 'lucide-react';
+import api from '@/api/api';  
+import { FileUpload } from 'primereact/fileupload'; 
+
 
 interface Props {
     visible: boolean;
@@ -19,6 +21,8 @@ const getStoredUserId = () => {
     return id ? Number(id) : 0;
 };
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 const BankDetailsSidebar: React.FC<Props> = ({
     visible,
     onHide,
@@ -27,6 +31,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
    
 }) => {
     const [loading, setLoading] = useState(false);
+    const [qrPreview, setQrPreview] = useState('');
     const [formData, setFormData] = useState({
         bankName: '',
         accountNumber: '',
@@ -52,6 +57,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
                 qrCodeUrl: initialData.qrCodeUrl || '',
                 userId: initialData.userId || getStoredUserId()
             });
+            setQrPreview(initialData.qrCodeUrl || '');
         } else {
             setFormData({
                 bankName: '',
@@ -63,8 +69,43 @@ const BankDetailsSidebar: React.FC<Props> = ({
                 qrCodeUrl: '',
                 userId: getStoredUserId()
             });
+            setQrPreview('');
+
         }
     }, [initialData, visible]);
+
+        const handleQrUpload = (e: any) => {
+        const file = e.files?.[0];
+
+        if (!file) return;
+
+        // Validate image type
+        if (!file.type.startsWith('image/')) {
+            alert('Only image files are allowed.');
+            return;
+        }
+
+        // Validate size
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File size must be less than 2MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+
+            setQrPreview(base64);
+
+            setFormData(prev => ({
+                ...prev,
+                qrCodeUrl: base64
+            }));
+        };
+
+        reader.readAsDataURL(file);
+    };
 
 const handleSave = async () => {
     setLoading(true);
@@ -236,7 +277,104 @@ const handleSave = async () => {
                             className="w-full p-5 rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold transition-all resize-none"
                         />
                     </div>
+                     {/* QR CODE UPLOAD */}
+                        {/* QR CODE UPLOAD */}
+<div className="space-y-3">
+
+    <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-2">
+        <FileImage size={14} />
+        QR Code
+    </label>
+
+    {/* Hidden Input */}
+    <input
+        type="file"
+        accept="image/png, image/jpeg, image/jpg"
+        id="qr-upload"
+        className="hidden"
+        onChange={(e) => {
+            const file = e.target.files?.[0];
+
+            if (!file) return;
+
+            // Validate type
+            if (!file.type.startsWith('image/')) {
+                alert('Only image files are allowed.');
+                return;
+            }
+
+            // Validate size
+            if (file.size > MAX_FILE_SIZE) {
+                alert('File size must be less than 2MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+
+                setQrPreview(base64);
+
+                setFormData(prev => ({
+                    ...prev,
+                    qrCodeUrl: base64
+                }));
+            };
+
+            reader.readAsDataURL(file);
+        }}
+    />
+
+    {/* Custom Upload Button */}
+    <label
+        htmlFor="qr-upload"
+        className="
+            w-full
+            h-36
+            border-2
+            border-dashed
+            border-slate-200
+            rounded-3xl
+            bg-slate-50/50
+            hover:border-blue-400
+            hover:bg-blue-50/30
+            transition-all
+            cursor-pointer
+            flex
+            flex-col
+            items-center
+            justify-center
+            gap-3
+        "
+    >
+        <UploadCloud size={32} className="text-slate-400" />
+
+        <div className="text-center">
+            <p className="text-sm font-bold text-slate-700">
+                Upload QR Code
+            </p>
+
+            <p className="text-[11px] text-slate-400 mt-1">
+                PNG / JPG only • Max 2MB
+            </p>
+        </div>
+    </label>
+
+    {/* Preview */}
+    {qrPreview && (
+        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
+            <img
+                src={qrPreview}
+                alt="QR Preview"
+                className="w-44 h-44 object-contain rounded-xl bg-white border"
+            />
+        </div>
+    )}
+
+</div>     
                 </div>
+                
             </div>
 
             {/* --- STICKY FOOTER --- */}
@@ -251,7 +389,7 @@ const handleSave = async () => {
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex-[2] h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                    className="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                 >
                     {loading ? (
                         <span className="flex items-center gap-2">
@@ -263,7 +401,8 @@ const handleSave = async () => {
                     )}
                 </button>
             </div>
-        </div>
+        </div> 
+
     </Sidebar>
 );
 };

@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import api from "@/api/apitest";
+import api from "@/api/api";
 
 interface DropdownItem {
   id: number | string;
@@ -284,7 +284,7 @@ if (email && !isValidEmail(email)) {
       gstnumber: isIndiaBilling ? formData.gstNumber : "",
       pan: formData.pan || "",
       isexport: !isIndiaBilling,
-      gststatus: isIndiaBilling ? formData.gstStatus : "URD",
+      gststatus: isIndiaBilling ? formData.gstStatus : "Unregistered",
       tax_percentage: formData.taxPercentage || 0,
     };
 

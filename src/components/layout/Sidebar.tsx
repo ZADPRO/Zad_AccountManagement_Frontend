@@ -6,11 +6,13 @@ const Sidebar = () => {
 
   return (
     <aside className="w-62 h-screen bg-white text-slate-600 flex flex-col border-r border-slate-200 fixed left-0 top-0 z-50">
-      <div className="p-6 border-b border-slate-100">
-        <h1 className="text-slate-900 font-black text-xl tracking-tighter italic">
-          Account<span className="text-blue-600">Manager</span>
-        </h1>
-      </div>
+      <div className="pt-5 mb-5 flex justify-center">
+  <img 
+    src="/LOGO.PNG" 
+    alt="ZAdroit IT Solutions" 
+    className="h-auto w-35 md:w-30 object-contain" 
+  />
+</div>
       <div className="flex-1 overflow-y-auto py-1 space-y-5">
         
         <div> 
@@ -21,7 +23,7 @@ const Sidebar = () => {
 
         <div> 
           <nav className="space-y-1 px-4">
-            <SidebarItem icon="pi-home" label="Settings" to="/Settings" />
+            <SidebarItem icon="pi-cog" label="Settings" to="/Settings" />
           </nav>
         </div>
  
@@ -47,7 +49,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-slate-100">
         <button 
           onClick={logout} 
-          className="flex items-center w-full px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group"
+          className="flex items-center w-full px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-yellow-400 hover:bg-amber-50 rounded-xl transition-all group"
         >
           <i className="pi pi-sign-out mr-3 group-hover:-translate-x-1 transition-transform"></i>
           Logout

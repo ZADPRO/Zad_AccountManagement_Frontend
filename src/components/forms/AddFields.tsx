@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from 'primereact/sidebar';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
-import { InputSwitch } from 'primereact/inputswitch'; // Added for the toggle
-import { Database, X, Check, Asterisk } from 'lucide-react'; // Added Asterisk icon
+import { Database, X, Check } from 'lucide-react'; 
 import api from '@/api/api'; 
 
 interface Props {
@@ -79,7 +78,7 @@ const CustomFieldSidebar: React.FC<Props> = ({
                 {/* Header */}
                 <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <div className="w-10 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
                             <Database size={24} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -126,26 +125,7 @@ const CustomFieldSidebar: React.FC<Props> = ({
                         />
                     </div>
 
-                    {/* --- NEW: Required Toggle Section --- */}
-                    <div className="p-5 rounded-3xl border border-slate-100 bg-slate-50/30 flex items-center justify-between group hover:border-indigo-100 transition-colors">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${formData.isRequired ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
-                                <Asterisk size={18} strokeWidth={3} />
-                            </div>
-                            <div>
-                                <h4 className="text-[13px] font-black text-slate-800 tracking-tight">Required Field</h4>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Validation Rule</p>
-                            </div>
-                        </div>
-                        
-                        <InputSwitch 
-                            checked={formData.isRequired} 
-                            onChange={(e) => setFormData({ ...formData, isRequired: e.value })}
-                            className="custom-switch" // You can style this in CSS for indigo color
-                        />
-                    </div>
-                    {/* ---------------------------------- */}
-
+                   
                 </div>
 
                 {/* Footer */}
@@ -157,7 +137,7 @@ const CustomFieldSidebar: React.FC<Props> = ({
                     <button
                         onClick={handleSave}
                         disabled={loading || !formData.fieldLabel}
-                        className="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/10 flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                        className="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/10 flex items-center justify-center gap-3 transition-all disabled:opacity-50"
                     >
                         {loading ? 'Processing...' : <><Check size={18} strokeWidth={3} /> Define Field</>}
                     </button>
