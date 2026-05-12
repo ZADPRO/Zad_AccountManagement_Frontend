@@ -75,19 +75,43 @@ const handlePrint = (invoice: InvoiceListModel) => {
   setIsViewOpen(true);
 };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Void this invoice? This action cannot be undone.")) return;
-    try {
-      const token = sessionStorage.getItem("token");
-      const res = await fetch(`http://localhost:8080/api/v1/invoices/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setRefreshKey(prev => prev + 1);
-    } catch (err) {
-      console.error("Delete error:", err);
-    }
-  };
+const handleDelete = async (id: number) => {
+
+  const confirmed = window.confirm(
+    "Void this invoice? This action cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const token = sessionStorage.getItem("token");
+
+    const res = await api.delete(`/invoices/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // ✅ Success
+    alert(
+      res.data?.message ||
+      "Invoice deleted successfully"
+    );
+
+    // ✅ Refresh invoice list
+    setRefreshKey((prev) => prev + 1);
+
+  } catch (err: any) {
+
+    console.error("Delete failed:", err);
+
+    alert(
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      "Failed to delete invoice"
+    );
+  }
+};
 
   const filteredInvoices = invoices.filter(inv =>
     inv.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||

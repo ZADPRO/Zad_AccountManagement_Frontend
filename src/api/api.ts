@@ -1,6 +1,17 @@
 import axios from "axios";
 import { encrypt, decrypt } from "@/Utils/encryptionHelper";
 
+const HEX = /^[0-9a-f]+$/i;
+
+const isEncryptedPair = (payload: unknown): payload is [string, string] =>
+  Array.isArray(payload) &&
+  payload.length === 2 &&
+  typeof payload[0] === 'string' &&
+  typeof payload[1] === 'string' &&
+  HEX.test(payload[0]) &&
+  HEX.test(payload[1]) &&
+  payload[0].length === 32;
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
@@ -14,7 +25,7 @@ api.interceptors.request.use(
 
     const isLoginPath = config.url?.includes("/login");
 
-    if (config.data && token && !isLoginPath) {
+    if (config.data && token && !isLoginPath && config.method !== 'get') {
       const encrypted = encrypt(config.data, token);
       console.log("Encrypting request:", config.url, encrypted);
       config.data = { data: encrypted };
@@ -25,59 +36,93 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// ── Response: decrypt incoming body ─────────────────────────────────────────
+// ── Response: decrypt incoming body ─────────────────────────────────────────
 api.interceptors.response.use(
-  (response) => {
-    // --- 1. HANDLE LOGIN RESPONSE WRAPPER ---
-    // If the response is { token: "...", data: [...] }
-    if (
-      response.data &&
-      response.data.token &&
-      Array.isArray(response.data.data)
-    ) {
-      const { token: freshToken, data: encryptedArray } = response.data;
 
+  (response) => {
+
+    // LOGIN: backend returns token alongside encrypted payload
+    if (response.data?.token && Array.isArray(response.data.data)) {
       try {
-        const decrypted = decrypt(encryptedArray, freshToken);
-        // Merge the token back so LoginPage can see it
-        response.data = { ...decrypted, token: freshToken };
-        return response;
+        const decrypted = decrypt(response.data.data, response.data.token);
+
+        response.data = {
+          ...decrypted,
+          token: response.data.token,
+        };
+
       } catch (e) {
-        console.error("Login decryption failed:", e);
+        if (import.meta.env.DEV) {
+          console.error("Login decryption failed:", e);
+        }
       }
+
+      return response;
     }
 
-    // --- 2. HANDLE STANDARD ENCRYPTED RESPONSE ---
-    // This is for Invoices, Profile, etc.
-    const tokenInStorage = sessionStorage.getItem("token");
+    // NORMAL: unwrap then decrypt
+    const token = sessionStorage.getItem('token') ?? '';
     const payload = response.data?.data ?? response.data;
 
-    if (Array.isArray(payload) && payload.length === 2 && tokenInStorage) {
-      try {
-        response.data = decrypt(payload, tokenInStorage);
-      } catch (e) {
-        console.error("Standard decryption failed:", e);
+    if (isEncryptedPair(payload)) {
+
+      // Authenticated endpoints use token,
+      // public endpoints use empty string
+      const attempts = token ? [token, ''] : [''];
+
+      for (const t of attempts) {
+        try {
+          const decrypted = decrypt(payload, t);
+
+          response.data =
+            typeof decrypted === 'string'
+              ? JSON.parse(decrypted)
+              : decrypted;
+
+          break;
+
+        } catch {
+          // try next token
+        }
       }
     }
 
     return response;
   },
+
+  // ERROR RESPONSE DECRYPTION
   (error) => {
-    // Error decryption logic remains the same
-    const tokenInStorage = sessionStorage.getItem("token");
+
+    const token = sessionStorage.getItem('token') ?? '';
     const payload = error.response?.data?.data ?? error.response?.data;
 
-    if (Array.isArray(payload) && payload.length === 2 && tokenInStorage) {
-      try {
-        // Overwrite the encrypted error data with decrypted content
-        error.response.data = decrypt(payload, tokenInStorage);
-        console.log("Decrypted Error Response:", error.response.data);
-      } catch (e) {
-        console.error("Error response decryption failed:", e);
+    if (isEncryptedPair(payload)) {
+
+      const attempts = token ? [token, ''] : [''];
+
+      for (const t of attempts) {
+        try {
+
+          const decrypted = decrypt(payload, t);
+
+          error.response.data =
+            typeof decrypted === 'string'
+              ? JSON.parse(decrypted)
+              : decrypted;
+
+          console.log("Decrypted Error Response:", error.response.data);
+
+          break;
+
+        } catch {
+          // try next token
+        }
       }
     }
 
     return Promise.reject(error);
-  },
-);
+  }
 
+);
 export default api;

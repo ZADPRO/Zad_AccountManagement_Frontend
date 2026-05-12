@@ -39,7 +39,8 @@ const SettingsPage: React.FC = () => {
     const [loading, setLoading] = useState(false); 
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [isFieldSidebarOpen, setIsFieldSidebarOpen] = useState(false);
-    
+    const [refreshKey, setRefreshKey] = useState(0);
+
     useEffect(() => {
         const fetchBanks = async () => {
             setLoading(true);
@@ -56,24 +57,32 @@ const SettingsPage: React.FC = () => {
             } finally {
                 setLoading(false);
             }
-        };
-        const fetchFields = async () => {
-        try {
-            const res = await api.get('/custom-fields');
-            if (res.data?.status) {
-                const fields = (res.data.fields || []).map((f: any) => ({
-                    id: f.fieldId,
-                    label: f.fieldLabel,
-                    type: f.fieldType,
-                    isRequired: f.isRequired,
-                    active: true 
-                }));
-                setCustomFields(fields);
-            }
-        } catch (err) {
-            console.error("Error fetching custom fields:", err);
-        }
-    };
+        }; 
+         
+
+
+const fetchFields = async () => {
+    try {
+        const res = await api.get('/custom-fields');
+        console.log("Full Response Object:", res);
+
+        // FIX: Access 'fields' instead of 'data' based on your console output
+        const rawData = res.data?.fields || []; 
+        
+        const fieldslist = rawData.map((f: any) => ({
+            id: String(f.fieldId),
+            label: f.fieldLabel, 
+            type: f.fieldType,
+            isRequired: f.isRequired,
+            // You can check if the field is deleted or active here
+            active: !f.deletedAt 
+        }));
+
+        setCustomFields(fieldslist);
+    } catch (err) {
+        console.error("Error fetching custom fields:", err);
+    }
+};
         fetchBanks();
         fetchFields();
     }, []
@@ -117,9 +126,16 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
     });
 };
 
+<<<<<<< HEAD
     // const toggleField = (id: string) => {
     //     setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
     // }; 
+=======
+
+    const toggleField = (id: string) => {
+        setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
+    }; 
+>>>>>>> testing
 
     const handleDelete = async (id: number) => {
     // Standard browser confirmation
@@ -137,27 +153,29 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
         console.error("Delete request failed:", err);
         alert("Could not delete the bank account. Please try again.");
     }
-}; 
-
-const handleSaveField = (apiResponse: any) => {
-    const res = apiResponse.data || apiResponse; // ✅ handle both cases
-
-    if (!res?.fieldId) {
-        console.error("Invalid response:", res);
-        return;
-    }
-
-    setCustomFields((prev) => [
-        ...prev,
-        {
-            id: String(res.fieldId),   // 👈 convert to string (important)
-            label: res.fieldLabel || "",  // backend doesn't return label
-            type: res.fieldType || "Text",
-            isRequired: res.isRequired || false,
-            active: true
-        }
-    ]);
 };
+ 
+
+const handleSaveField = (decryptedResponse: any) => {
+    // 1. Extract the data object from the response wrapper
+    const data = decryptedResponse.data || decryptedResponse;
+
+    // 2. Map the backend response to the CustomField interface
+    const newField: CustomField = {
+        id: String(data.fieldId),      // Backend 'fieldId' -> Frontend 'id'
+        label: data.fieldLabel,        // Backend 'fieldLabel' -> Frontend 'label'
+        type: data.fieldType as 'Text' | 'Date' | 'Number',
+        isRequired: Boolean(data.isRequired),
+        active: true                   // Newly created fields are active by default
+    };
+
+    // 3. Update state to reflect the new field in the UI immediately
+    setCustomFields((prev) => [...prev, newField]);
+    
+    // 4. Close the sidebar/modal
+    setIsFieldSidebarOpen(false);
+};
+
 const handleDeleteField = async (id: string) => {
     if (!window.confirm("Delete this field? Existing invoices won't be affected.")) return;
     try {
@@ -225,9 +243,11 @@ const handleDeleteField = async (id: string) => {
                                     onClick={() => {
             setSelectedBank(bank); 
             setIsBankSidebarOpen(true);
+            
         }}
                                     className="p-3 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
                                         <Edit2 size={18} />
+                                        
                                     </button>
                                     <button 
                                     onClick={() => {
@@ -236,7 +256,7 @@ const handleDeleteField = async (id: string) => {
                 handleDelete(bank.id);
             }
         }}
-                                    className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+             className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
@@ -255,11 +275,10 @@ const handleDeleteField = async (id: string) => {
                 setIsBankSidebarOpen(false);
                 setSelectedBank(null); // 💡 Crucial: Reset to null so "Add" mode works next time
                 }}
-                onSave={handleSaveBank}
+               onSave={handleSaveBank}
                 loading={loading}
                 initialData={selectedBank} // For Edit Mode logic
             /> 
-
             {/* --- Custom Fields Section --- */}
 <section>
     <div className="flex items-center justify-between mb-8">

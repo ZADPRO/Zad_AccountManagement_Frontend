@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Shell from './components/layout/shell'; 
 import RecipientMaster from './Pages/ClientRegistry';
 import UserManagement from './Pages/UserManagement';
-import NewInvoice from './Pages/NewInvoice'; 
+import NewInvoice from './Pages/NewInvoicePage'; 
  
 
 import LoginPage from './Pages/LoginPage'; 
