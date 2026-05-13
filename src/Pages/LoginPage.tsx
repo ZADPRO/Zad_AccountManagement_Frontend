@@ -23,7 +23,7 @@ const LoginPage = () => {
       password
     });
 
-    console.log("📦 Final response (after interceptor):", response.data);
+    
 
     // ✅ Now data is already decrypted
     const { token, role, isFirstLogin, userId, name, status } = response.data;
