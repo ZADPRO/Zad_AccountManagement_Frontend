@@ -115,12 +115,6 @@ const confirmDeleteAction = async () => {
         <h1 className="text-3xl font-black tracking-tighter text-slate-900">Clients</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Total" value={clients.length} icon={<Users />} />
-        <StatCard label="Active" value={clients.filter(c => c.isActive).length} icon={<ShieldCheck />} />
-        
-      </div>
-
       <div className="flex items-center justify-between gap-4">
         <input
           value={searchQuery}

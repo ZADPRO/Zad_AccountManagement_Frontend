@@ -118,6 +118,10 @@ const NewInvoice = () => {
   // ✅ INVOICE TYPE
   const [invoiceType, setInvoiceType] = useState('invoice');
 
+   const [taxRate, setTaxRate] = useState(18);
+   const [tdsRate, setTdsRate] = useState(2);
+ 
+
   /* -------------------------------------------------------------------------- */
   /*                               CALCULATIONS                                 */
   /* -------------------------------------------------------------------------- */
@@ -127,8 +131,7 @@ const NewInvoice = () => {
     0
   );
 
-  const taxRate = 18;
-  const tdsRate = 2;
+ 
 
   const isExport =
     fullClientDetails?.countryName?.toLowerCase() !== "india";
@@ -138,7 +141,7 @@ const NewInvoice = () => {
 
   const activeTaxRate = isExport ? 0 : taxRate;
 
-  const gstAmount = (subtotal * activeTaxRate) / 100;
+  const gstAmount = (subtotal * taxRate) / 100;
 
   const tdsAmount = (subtotal * tdsRate) / 100;
 
@@ -218,6 +221,9 @@ const NewInvoice = () => {
       paymentstatus: "pending",
 
       updatedby: getStoredUserId(),
+
+      taxamount:  gstAmount,
+      tdsamount: tdsAmount,
 
       // ✅ ITEMS WITH CUSTOM FIELDS
       items: items.map((item: any) => ({
@@ -516,8 +522,15 @@ const NewInvoice = () => {
               onInvoiceTypeChange={
                 setInvoiceType
               }
-            />
+             taxRate={taxRate}
+  onTaxRateChange={setTaxRate}
+  
 
+   tdsRate={tdsRate}
+  onTdsRateChange={setTdsRate}
+/>
+            
+          
             {/* CUSTOM FIELDS + CURRENCY */}
             <div className="grid grid-cols-3 gap-6 mb-8">
               <CustomFields
@@ -553,7 +566,7 @@ const NewInvoice = () => {
         <div className="space-y-6">
           <InvoiceSummary
             subtotal={subtotal}
-            taxRate={activeTaxRate}
+            taxRate={taxRate}
             tdsRate={tdsRate}
             isInterState={
               isInterState

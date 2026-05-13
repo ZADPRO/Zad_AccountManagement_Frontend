@@ -12,7 +12,8 @@ const InvoiceSummary = ({ subtotal, taxRate, tdsRate, isInterState,currency, }: 
   const gstAmount = (subtotal * taxRate) / 100;
   const tdsAmount = (subtotal * tdsRate) / 100;
   const grandTotal = subtotal + gstAmount - tdsAmount;
- 
+  const cgstAmount =(gstAmount / 2);
+  const sgstAmount =(gstAmount / 2);
 
   const currencySymbols: Record<string, string> = {
   INR: "₹",
@@ -51,11 +52,11 @@ const currencySymbol = currencySymbols[currency] || currency;
             <>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">CGST ({taxRate / 2}%)</span>
-                <span className="font-bold text-emerald-600">+{currencySymbol}{(gstAmount / 2).toLocaleString()}</span>
+                <span className="font-bold text-emerald-600">+{currencySymbol}{cgstAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">SGST ({taxRate / 2}%)</span>
-                <span className="font-bold text-emerald-600">+ {currencySymbol}{(gstAmount / 2).toLocaleString()}</span>
+                <span className="font-bold text-emerald-600">+ {currencySymbol}{sgstAmount.toLocaleString()}</span>
               </div>
             </>
           )}

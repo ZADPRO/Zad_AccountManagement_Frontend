@@ -126,16 +126,12 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
     });
 };
 
-<<<<<<< HEAD
-    // const toggleField = (id: string) => {
-    //     setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
-    // }; 
-=======
+
 
     const toggleField = (id: string) => {
         setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
     }; 
->>>>>>> testing
+
 
     const handleDelete = async (id: number) => {
     // Standard browser confirmation

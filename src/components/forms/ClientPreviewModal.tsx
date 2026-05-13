@@ -1,6 +1,6 @@
 import  { useState, useEffect } from 'react';
 import { X,  Loader2, AlertCircle, Building2, MapPin, ReceiptIndianRupee } from 'lucide-react';
-import api from '@/api/apitest';
+import api from '@/api/api';
 
 interface ViewClientProps {
   isOpen: boolean;

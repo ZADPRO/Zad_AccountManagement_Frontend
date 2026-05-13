@@ -182,82 +182,98 @@ return updatedItem;
             </tr>
           </thead>
 
-          {/* TABLE BODY */}
-          <tbody className="divide-y divide-slate-100 bg-white">
-            {items.map((item) => (
-              <tr key={item.id} className="hover:bg-slate-50 transition-all">
+         {/* TABLE BODY */}
+<tbody className="divide-y divide-slate-100 bg-white">
+  {items.map((item) => (
+    <tr key={item.id} className="hover:bg-slate-50 transition-all">
 
-                {/* DESCRIPTION */}
-                <td className="py-3 px-3">
-                  <input
-                    type="text"
-                    value={item.description}
-                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                    placeholder="Service / Product"
-                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                  />
-                </td>
+      {/* DESCRIPTION */}
+      <td className="py-3 px-2 w-[32%]">
+        <input
+          type="text"
+          value={item.description}
+          onChange={(e) =>
+            updateItem(item.id, "description", e.target.value)
+          }
+          placeholder="Service / Product"
+          className="w-full bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
+        />
+      </td>
 
-                {/* QUANTITY */}
-                <td className="py-3 px-3">
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))
-                    }
-                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                  />
-                </td>
+      {/* QUANTITY */}
+      <td className="py-3 px-2 w-[14%]">
+        <input
+          type="number"
+          min={1}
+          value={item.quantity}
+          onChange={(e) =>
+            updateItem(
+              item.id,
+              "quantity",
+              Math.max(1, parseInt(e.target.value) || 1)
+            )
+          }
+          className="w-full min-w-[100px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
+        />
+      </td>
 
-                {/* RATE */}
-                <td className="py-3 px-3">
-                  <input
-                    type="number"
-                    min={0}
-                    value={item.rate}
-                    onChange={(e) =>
-                      updateItem(item.id, "rate", Math.max(0, parseFloat(e.target.value) || 0))
-                    }
-                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                  />
-                </td>
+      {/* RATE */}
+      <td className="py-3 px-2 w-[18%]">
+        <input
+          type="number"
+          min={0}
+          value={item.rate}
+          onChange={(e) =>
+            updateItem(
+              item.id,
+              "rate",
+              Math.max(0, parseFloat(e.target.value) || 0)
+            )
+          }
+          className="w-full min-w-[140px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
+        />
+      </td>
 
-                {/* One <td> per user-selected custom field — single map, no nesting */}
-                {customFields.map((col) => (
-                  <td key={col.fieldId} className="py-3 px-3">
-                    <input
-                      type="text"
-                      value={item[col.fieldId] ?? ""}
-                      onChange={(e) => updateItem(item.id, String(col.fieldId), e.target.value)}
-                      placeholder={col.label}
-                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </td>
-                ))}
+      {/* CUSTOM FIELDS */}
+      {customFields.map((col) => (
+        <td key={col.fieldId} className="py-3 px-2">
+          <input
+            type="text"
+            value={item[col.fieldId] ?? ""}
+            onChange={(e) =>
+              updateItem(
+                item.id,
+                String(col.fieldId),
+                e.target.value
+              )
+            }
+            placeholder={col.label}
+            className="w-full min-w-[130px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
+          />
+        </td>
+      ))}
 
-                {/* AMOUNT */}
-                <td className="py-3 px-3">
-                  <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
-                    {item.amount.toFixed(2)}
-                  </div>
-                </td>
+      {/* AMOUNT */}
+      <td className="py-3 px-2 w-[16%]">
+        <div className="w-full min-w-[140px] bg-slate-50 border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold shadow-sm text-right">
+          {item.amount.toFixed(2)}
+        </div>
+      </td>
 
-                {/* DELETE */}
-                <td className="py-3 px-3 text-center">
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="text-slate-400 hover:text-red-500 transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </td>
+      {/* DELETE */}
+      <td className="py-3 px-2 text-center w-[6%]">
+        <button
+          type="button"
+          onClick={() => removeItem(item.id)}
+          className="text-slate-400 hover:text-red-500 transition-all"
+        >
+          <Trash2 size={18} />
+        </button>
+      </td>
 
-              </tr>
-            ))}
-          </tbody>
+    </tr>
+  ))}
+</tbody>
 
         </table>
       </div>

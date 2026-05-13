@@ -58,7 +58,9 @@ interface InvoiceResponse {
   customValues?: CustomFieldValue[];
  invoiceduedate :string ;           
 	currency  :     string;  
-  invoiceType: string; 
+  invoiceType: string;
+  taxamount: number; 
+  tdsamount: number; 
   
     // ✅ ADD THESE
   bankDetails?: {
@@ -96,8 +98,8 @@ function numberToWords(num: number): string {
   return numberToWords(Math.floor(num/100000)) + " Lakh" + (num%100000 ? " " + numberToWords(num%100000) : "");
 }
 
-const fmt = (n: number) =>
-  `INR ${Number(n).toLocaleString("en-CH", { minimumFractionDigits: 2 })}`;
+const fmt = (n: number, currency: string = "INR") =>
+  `${currency} ${Number(n).toLocaleString("en-CH", { minimumFractionDigits: 0 })}`;
 
 
 function formatDate(date: string) {
@@ -128,7 +130,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         console.log(res);
         // ✅ handle both formats safely
         const raw = res.data.data || res.data;
-
+        
       
 const data = {
   ...raw,
@@ -154,6 +156,7 @@ const data = {
     label: f.label,
     value: f.value,
   })),
+  
   // ✅ NEW MAPPINGS
   bankDetails: raw.bankDetails || {
     beneficiary: raw.invoiceBeneficiary,
@@ -169,6 +172,7 @@ const data = {
   qrCodeUrl: raw.qrCodeUrl || raw.invoiceQrCodeUrl || null,
 };
 
+
       setInvoice(data); 
       
        
@@ -182,6 +186,8 @@ const data = {
 
     fetchInvoice();
   }, [invoiceId]);
+
+
 
   useEffect(() => {
   if (autoPrint && invoice) {
@@ -201,10 +207,10 @@ const data = {
         <head>
           <title>Invoice - ${invoice.invoicenumber}</title>
           <style>
-          * {
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
+              * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
             * { margin:0; padding:0; box-sizing:border-box; }
             body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
             .inv-header { display:flex; border-bottom: 2px solid #1a5276; }
@@ -221,7 +227,7 @@ const data = {
             .inv-bill-to { padding:10px 14px; min-height:52px; line-height:1.6; }
             table { width:100%; border-collapse:collapse; }
             thead tr { background:#1a5276; color:white; }
-            thead th { padding:7px 10px; text-align:left; }
+           <th style={{ padding: "7px 10px", textAlign: "right" }}></th>
             thead th:first-child { width:36px; text-align:center; }
             thead th:last-child { text-align:right; }
             tbody tr { border-bottom:1px solid #ddd; }
@@ -271,8 +277,22 @@ const data = {
   if (error)   return <div style={{ padding: 20, color: "red" }}>Error: {error}</div>;
   if (!invoice) return <div style={{ padding: 20 }}>Invoice not found</div>;
 
-  const totalWords = numberToWords(Math.floor(invoice.grandtotal)) + "Rupees Only";
+  const totalWords = numberToWords(Math.floor(invoice.grandtotal)) +" "+ (invoice.currency) + "Only";
   const bank = invoice.bankDetails;
+  const subtotal = invoice.items.reduce(
+  (sum: number, item: any) =>
+    sum + Number(item.linetotal || 0),
+  0
+);
+const taxPercentage =
+  subtotal > 0
+    ? (invoice.taxamount / subtotal) * 100
+    : 0;
+const tdsPercentage =
+  subtotal > 0
+    ? (invoice.tdsamount / subtotal) * 100
+    : 0;
+    
   return (
     <div>
       {/* Print Button */}
@@ -365,12 +385,25 @@ const data = {
           <strong>{invoice.client.name}</strong>&nbsp;
           ({invoice.client.businessName})<br/>
           {invoice.client.billingAddress}<br/>
-          {invoice.client.billingState}, {invoice.client.billingCountry}<br/>
-          {invoice.client.gstnumber && `GSTIN: ${invoice.client.gstnumber}`}
-          {invoice.client.pan && <>&nbsp;·&nbsp;PAN: {invoice.client.pan}</>}
+         {[
+  invoice.client.billingState,
+  invoice.client.billingCountry
+]
+  .filter(Boolean)
+  .join(", ")}<br/>
+          {[
+  invoice.client.gstnumber
+    ? `GSTIN: ${invoice.client.gstnumber}`
+    : null,
+
+  invoice.client.pan
+    ? `PAN: ${invoice.client.pan}`
+    : null,
+]
+  .filter(Boolean)
+  .join(" · ")}
         </div>
 
-        {/* Items Table */}
         {/* Items Table */}
 <table style={{ width: "100%", borderCollapse: "collapse" }}>
   <thead>
@@ -385,7 +418,7 @@ const data = {
         </th>
       ))}
 
-      <th style={{ padding: "7px 10px", textAlign: "right" }}>Amount (INR)</th>
+      <th style={{ padding: "7px 10px", textAlign: "right" }}>Amount {(invoice.currency)}</th>
     </tr>
   </thead>
   <tbody>
@@ -411,7 +444,7 @@ const data = {
         ))}
 
         <td style={{ padding: "10px", textAlign: "right", fontSize: 12 }}>
-          {fmt(item.linetotal)}
+          {(invoice.currency)} {(item.linetotal)}
         </td>
       </tr>
     ))}
@@ -424,22 +457,34 @@ const data = {
             <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
               Sub Total
             </div>
+            
             <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-              {fmt(invoice.grandtotal)}
+             
+                {(invoice.currency)} {(subtotal)}
             </div>
           </div>
 
           {/* Tax row — only if not export and tax > 0 */}
-          {!invoice.client.isexport && invoice.client.tax_percentage > 0 && (
+          {!invoice.client.isexport && (
             <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
               <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
-                GST ({invoice.client.tax_percentage}%)
+                GST/IGST ({taxPercentage}%)
+              </div>
+            
+              <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
+                {(invoice.currency)} {(invoice.taxamount)}
+              </div>
+               </div>
+          )}
+             <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
+              <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
+                TDS ({tdsPercentage}%)
               </div>
               <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-                {fmt(invoice.grandtotal * invoice.client.tax_percentage / 100)}
+                {(invoice.currency)} {(invoice.tdsamount)}
               </div>
             </div>
-          )}
+          
 
           {/* Grand Total */}
           <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
@@ -447,7 +492,7 @@ const data = {
               Total
             </div>
             <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontWeight:"bold", fontSize:13 }}>
-              {fmt(invoice.grandtotal)}
+              {(invoice.currency)} {(invoice.grandtotal)}
             </div>
           </div>
         </div>

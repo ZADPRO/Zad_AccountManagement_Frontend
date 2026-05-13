@@ -10,6 +10,7 @@ interface DashboardData {
     totalRevenue: number;
     pendingAmount: number;
     overdueCount: number;
+    paidInvoices: number;
 }
 
 const Dashboard = () => {
@@ -84,6 +85,17 @@ const Dashboard = () => {
                     value={data?.overdueCount || 0} 
                     icon={<i className="pi pi-exclamation-circle" style={{ fontSize: '1.2rem' }}></i>} 
                 />
+                 <StatCard 
+        label="Active Users" 
+        value={data?.activeUsers || 0} 
+        icon={<i className="pi pi-user" style={{ fontSize: '1.2rem' }}></i>} 
+    />
+
+    <StatCard 
+        label="Paid Invoices" 
+        value={data?.paidInvoices || 0} 
+        icon={<i className="pi pi-check-circle" style={{ fontSize: '1.2rem' }}></i>} 
+    />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
