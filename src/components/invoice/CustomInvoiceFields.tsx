@@ -22,13 +22,13 @@ const CustomFields = ({ fieldDefs, onChange }: any) => {
   onChange(updated);
 };
 
-  const handleValueChange = (index: number, value: string) => {
-    const updated = [...selectedFields];
-    updated[index].value = value;
+  // const handleValueChange = (index: number, value: string) => {
+  //   const updated = [...selectedFields];
+  //   updated[index].value = value;
 
-    setSelectedFields(updated);
-    onChange(updated);
-  };
+  //   setSelectedFields(updated);
+  //   onChange(updated);
+  // };
 
   const removeField = (index: number) => {
     const updated = selectedFields.filter((_, i) => i !== index);

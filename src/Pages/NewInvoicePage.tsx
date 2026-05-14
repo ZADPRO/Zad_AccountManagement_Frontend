@@ -133,13 +133,13 @@ const NewInvoice = () => {
 
  
 
-  const isExport =
-    fullClientDetails?.countryName?.toLowerCase() !== "india";
+  // const isExport =
+  //   fullClientDetails?.countryName?.toLowerCase() !== "india";
 
   const isInterState =
     fullClientDetails?.stateName !== MY_BUSINESS_STATE;
 
-  const activeTaxRate = isExport ? 0 : taxRate;
+  // const activeTaxRate = isExport ? 0 : taxRate;
 
   const gstAmount = (subtotal * taxRate) / 100;
 

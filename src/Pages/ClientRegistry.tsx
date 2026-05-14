@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users,  ShieldCheck } from 'lucide-react';
+import { Plus } from 'lucide-react';
 // import { useAuth } from '../context/AuthContext';
 import Table from '../components/ui/ClientTable';
 import ClientModal from '../components/forms/ClientModal';
 import ClientPreviewModal from '@/components/forms/ClientPreviewModal'; // New Component
-import StatCard from '../components/ui/StatCard';
+// import StatCard from '../components/ui/StatCard';
 import { type ClientListModel } from '../types/clients'; 
 import api from '@/api/api';
 import { Button } from 'primereact/button';
