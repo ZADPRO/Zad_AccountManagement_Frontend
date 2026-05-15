@@ -69,7 +69,6 @@ interface InvoiceResponse {
     accountNumber: string;
     ifsc: string;
     accountType: string;
-    adCode: string;
     swiftCode: string;
     bankAddress: string;
   };
@@ -127,7 +126,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
             Authorization: `Bearer ${token}`
           }
         });
-        console.log(res);
+      
         // ✅ handle both formats safely
         const raw = res.data.data || res.data;
         
@@ -164,7 +163,6 @@ const data = {
     accountNumber: raw.invoiceAccountNumber,
     ifsc: raw.invoiceIfscCode,
     accountType: raw.invoiceAccountType,
-    adCode: raw.invoiceAdCode,
     swiftCode: raw.invoiceSwiftCode,
     bankAddress: raw.invoiceBankAddress,
   },
@@ -429,7 +427,7 @@ const tdsPercentage =
           {item.description}
           {item.quantity > 1 && (
             <span style={{ color: "#888", fontSize: 11 }}>
-              &nbsp;(Qty: {item.quantity} × {fmt(item.unitprice)})
+              &nbsp;(Qty: {item.quantity} × {fmt(item.unitprice, invoice.currency)})
             </span>
           )}
         </td>
@@ -518,12 +516,11 @@ const tdsPercentage =
     </div>
 
     {[
-      ["Beneficiary", bank.beneficiary],
+      ["Beneficiary", 'ZADROIT IT SOLUTIONS PRIVATE LIMITED'],
       ["Bank", bank.bankName],
       ["Account No", bank.accountNumber],
       ["IFSC Code", bank.ifsc],
       ["Account Type", bank.accountType],
-      ["AD Code", bank.adCode],
       ["Swift Code", bank.swiftCode],
       ["Bank Address", bank.bankAddress],
     ].map(([label, val]) => (

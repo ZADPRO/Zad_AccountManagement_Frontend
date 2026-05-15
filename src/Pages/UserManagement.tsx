@@ -158,13 +158,13 @@ const UserManagement = () => {
         />
       </div>
 
-      <div className="bg-white rounded-4xl border border-slate-200 overflow-hidden shadow-sm">
+      
         <UserTable 
           data={filteredUsers} 
           onDelete={triggerDelete} // Pass the custom trigger
           onEdit={(user, mode) => openModal(user, mode)} 
         />
-      </div>
+      
 
       <UserModal 
         key={selectedUser?.userId || 'new'}

@@ -126,11 +126,10 @@ const handleDelete = async (id: number) => {
   const overdueCount = invoices.filter(inv => inv.dueDate < today && inv.status !== 'paid').length;
 
   return (
-    <div className="p-8 space-y-8 bg-slate-50 min-h-screen">
+    <div className="p-3 space-y-8 bg-slate-50 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pending Invoices</h1>
-          <p className="text-slate-500 text-sm font-medium">Manage and track your outstanding payments</p>
         </div>
       </div>
 
@@ -154,18 +153,19 @@ const handleDelete = async (id: number) => {
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center gap-4">
-        <div className="relative w-full max-w-md">
+      <div className="flex flex-col md:flex-row items-stretch justify-between gap-4">
+        <div className="relative w-full max-w-md h-12">
+          <i className="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by client or invoice #..."
-            className="w-full border border-slate-200 p-3 pl-4 rounded-2xl bg-white shadow-sm outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all text-sm"
+          className="w-full h-full pl-12 rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 transition-all"
           />
         </div>
       </div>
 
-        <div className="bg-white rounded-xl shadow p-4">
+        
         {isLoading ? (
           <p>Loading...</p>
         ) : (
@@ -176,13 +176,13 @@ const handleDelete = async (id: number) => {
             onDelete={handleDelete}
           />
         )}
-      </div>
+
 
       {/* ✅ MODAL */}
      {isViewOpen && selectedInvoiceId && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-    <div className="bg-white w-\[900px]\ max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-4 relative">
+    <div className="bg-white \w-[900px]\ max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-4 relative">
 
       {/* Close Button */}
       <button

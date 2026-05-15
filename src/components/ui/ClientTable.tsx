@@ -13,7 +13,7 @@ const { userRole } = useAuth();
 
  
   return (
-    <div className="w-full h-125 overflow-y-auto custom-scrollbar bg-white">
+    <div className="relative w-full overflow-y-auto max-h-150 rounded-xl border border-slate-100 bg-white custom-scrollbar">
       <table className="w-full text-left border-separate border-spacing-0">
         
         {/* HEADER */}

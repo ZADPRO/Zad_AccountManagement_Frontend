@@ -21,22 +21,21 @@ const UserTable = ({ data, onEdit, onDelete }: UserTableProps) => {
   };
 
   return (
-  <div className="relative">
-    <div className="overflow-x-auto overflow-y-auto h-102.5 bg-white border border-slate-200 rounded-2xl shadow-sm no-scrollbar">
-      <table className="w-full text-left border-collapse">
+  <div className="w-full">
+    <div className="relative w-full overflow-y-auto max-h-150 rounded-xl border border-slate-100 bg-white custom-scrollbar">
+      <table className="w-full text-left border-separate border-spacing-0">
         {/* 4. Made the header STICKY so it doesn't disappear when scrolling */}
         <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
-          <tr className="text-slate-400 text-[10px] uppercase tracking-widest font-black">
-            <th className="px-6 py-5 border-b border-slate-100">User Identity</th>
-            <th className="px-6 py-5 border-b border-slate-100">User Code</th>
-            <th className="px-6 py-5 border-b border-slate-100">System Role</th>
-            <th className="px-6 py-5 border-b border-slate-100">Created At</th>
-            <th className="px-6 py-5 border-b border-slate-100 text-right">Actions</th>
+          <tr className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <th className="px-6 py-5 border-b border-slate-200">User Identity</th>
+            <th className="px-6 py-5 border-b border-slate-200">User Code</th>
+            <th className="px-6 py-5 border-b border-slate-200">System Role</th>
+            <th className="px-6 py-5 border-b border-slate-200 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-50">
+        <tbody className="divide-y divide-slate-100">
           {data.map((user) => (
-            <tr key={user.userId} className="hover:bg-slate-50/50 transition-colors group">
+            <tr key={user.userId} className="hover:bg-slate-50 transition-all group">
               <td className="px-6 py-4">
                 <button 
                   onClick={() => onEdit(user, 'view')}
@@ -55,9 +54,6 @@ const UserTable = ({ data, onEdit, onDelete }: UserTableProps) => {
               </td>
               <td className="px-6 py-4">
                 {getRoleBadge(user.roleId)}
-              </td>
-              <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

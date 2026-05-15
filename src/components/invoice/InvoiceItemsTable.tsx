@@ -165,13 +165,13 @@ return updatedItem;
           <thead className="bg-slate-50 sticky top-0 z-20">
             <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 
-              <th className="py-4 px-3 min-w-[250px]">Description</th>
+              <th className="py-4 px-3 min-w-62.5">Description</th>
               <th className="py-4 px-3 w-24">Qty</th>
               <th className="py-4 px-3 w-36">Rate ({currency})</th>
 
               {/* One <th> per user-selected custom field */}
               {customFields.map((col) => (
-                <th key={col.fieldId} className="py-4 px-3 min-w-[180px]">
+                <th key={col.fieldId} className="py-4 px-3 min-w-45">
                   {col.label}
                 </th>
               ))}
@@ -213,7 +213,7 @@ return updatedItem;
               Math.max(1, parseInt(e.target.value) || 1)
             )
           }
-          className="w-full min-w-[100px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
+          className="w-full min-w-25 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
         />
       </td>
 
@@ -230,7 +230,7 @@ return updatedItem;
               Math.max(0, parseFloat(e.target.value) || 0)
             )
           }
-          className="w-full min-w-[140px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
+          className="w-full min-w-35 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
         />
       </td>
 
@@ -248,14 +248,14 @@ return updatedItem;
               )
             }
             placeholder={col.label}
-            className="w-full min-w-[130px] bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
+            className="w-full min-w-32.5 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
           />
         </td>
       ))}
 
       {/* AMOUNT */}
       <td className="py-3 px-2 w-[16%]">
-        <div className="w-full min-w-[140px] bg-slate-50 border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold shadow-sm text-right">
+        <div className="w-full min-w-35 bg-slate-50 border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold shadow-sm text-right">
           {item.amount.toFixed(2)}
         </div>
       </td>

@@ -1,4 +1,4 @@
-import { IndianRupee, ShieldCheck } from 'lucide-react';
+import { IndianRupee } from 'lucide-react';
 
 interface InvoiceSummaryProps {
   subtotal: number;
@@ -77,16 +77,6 @@ const currencySymbol = currencySymbols[currency] || currency;
             
           </div>
         </div>
-      </div>
-
-      {/* Compliance Note: Soft Blue/Slate style */}
-      <div className="bg-slate-100/50 border border-slate-200 rounded-2xl p-5 flex gap-4">
-        <ShieldCheck className="text-blue-600 shrink-0" size={20} />
-        <p className="text-[11px] leading-relaxed text-slate-600">
-          This is a computer-generated document. Taxes are calculated as per the 
-          <strong className="text-slate-900"> GST Act 2017</strong>. Ensure TDS certificates are filed within 
-          the quarterly deadline.
-        </p>
       </div>
     </div>
   );

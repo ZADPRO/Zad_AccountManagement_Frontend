@@ -163,7 +163,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
       position="right"
       showCloseIcon={false}
       blockScroll
-      className="w-full md:w-[520px] bg-white border-l border-slate-100 shadow-2xl"
+      className="w-full md:w-130 bg-white border-l border-slate-100 shadow-2xl"
       appendTo="self"
     >
       <div className="h-screen flex flex-col bg-white overflow-hidden">
@@ -203,7 +203,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
                 onChange={(e) =>
                   setFormData({ ...formData, bankName: e.target.value })
                 }
-                placeholder="e.g. JPMorgan Chase"
+                placeholder="Enter Bank name"
                 className="w-full h-14 px-5 rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold transition-all placeholder:text-slate-300 placeholder:font-medium"
               />
             </div>
@@ -222,11 +222,11 @@ const BankDetailsSidebar: React.FC<Props> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, accountType: e.value })
                   }
-                  className="w-full h-14 rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:ring-4 focus:ring-blue-500/10 font-bold flex items-center transition-all"
+                  className="w-full h-14  rounded-2xl border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:ring-4 focus:ring-blue-500/10 font-bold flex items-center transition-all"
                 />
               </div>
 
-              <div className="space-y-2 group">
+              <div className="space-y-2 group ">
                 <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1 group-focus-within:text-blue-600 transition-colors">
                   IFSC Code
                 </label>
@@ -242,7 +242,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
             </div>
 
             {/* Account Number */}
-            <div className="group space-y-7 z-10">
+            <div className="group space-y-7 z-10 pt-5">
               <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1 group-focus-within:text-blue-600 transition-colors">
                 Account Number
               </label>
@@ -396,7 +396,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            className="flex-2 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center gap-2">

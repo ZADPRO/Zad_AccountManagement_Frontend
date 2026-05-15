@@ -182,15 +182,12 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-10 max-w-5xl mx-auto bg-slate-50 min-h-screen text-slate-900 font-sans">
+    <div className="p-3 max-w-5xl mx-auto bg-slate-50 min-h-screen text-slate-900 font-sans">
       {/* Header Area */}
-      <header className="mb-12">
-        <h1 className="text-4xl font-black tracking-tighter text-slate-900">
+      <header className="mb-8">
+        <h1 className="text-3xl font-black tracking-tighter text-slate-900">
           Invoice settings
         </h1>
-        <p className="text-slate-500 font-medium mt-2">
-          Configure your banking details and metadata fields for invoices.
-        </p>
       </header>
 
       {/* --- Banking Details Section --- */}
@@ -215,9 +212,9 @@ const SettingsPage: React.FC = () => {
           />
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-1">
           {banks.length === 0 ? (
-            <div className="p-12 border-2 border-dashed border-slate-200 rounded-[2rem] text-center bg-white/50">
+            <div className="p-12 border-2 border-dashed border-slate-200 rounded-4xl text-center bg-white/50">
               <Landmark size={40} className="mx-auto text-slate-200 mb-4" />
               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
                 No accounts linked yet
@@ -227,14 +224,14 @@ const SettingsPage: React.FC = () => {
             banks.map((bank, idx) => (
               <div
                 key={idx}
-                className="group flex items-center justify-between p-5 bg-white border border-slate-200 rounded-[2rem] hover:border-blue-400 transition-all hover:shadow-lg hover:shadow-blue-500/5"
+                className="group flex items-center justify-between p-4 bg-white border border-slate-200 rounded-4xl hover:border-blue-400 transition-all hover:shadow-lg hover:shadow-blue-500/5"
               >
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-3">
                   <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
                     <Landmark size={24} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <span className="font-extrabold text-slate-900 text-lg">
                         {bank.bankName}
                       </span>
@@ -244,7 +241,7 @@ const SettingsPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-bold text-slate-400 mt-0.5 tracking-tight">
+                    <p className="text-xs font-bold text-slate-400 mt-0.3 tracking-tight">
                       {bank.accountNumber} • {bank.accountType} •{" "}
                       {bank.ifscCode}
                     </p>
@@ -278,7 +275,7 @@ const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      <hr className="border-slate-200 mb-16" />
+      <hr className="border-slate-200 mb-10" />
 
       {/* Sidebar Component */}
       <BankDetailsSidebar
@@ -292,7 +289,7 @@ const SettingsPage: React.FC = () => {
         initialData={selectedBank} // For Edit Mode logic
       />
       {/* --- Custom Fields Section --- */}
-      <section>
+      <section className="mb-16">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-slate-800">
@@ -319,7 +316,7 @@ const SettingsPage: React.FC = () => {
             customFields.map((field) => (
               <div
                 key={field.id}
-                className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-[1.5rem]"
+                className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-3xl"
               >
                 <div className="flex items-center gap-5">
                   <GripVertical

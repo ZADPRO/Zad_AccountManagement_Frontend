@@ -59,7 +59,7 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            <header>
+            <header className='p-3'>
                 <h1 className="text-3xl font-black tracking-tighter text-slate-900">Dashboard</h1>
             </header>
 

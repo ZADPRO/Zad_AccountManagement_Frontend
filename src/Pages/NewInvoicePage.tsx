@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FileText, Send, Loader2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 import InvoiceItemsTable from '../components/invoice/InvoiceItemsTable';
 import InvoiceSummary from '../components/invoice/InvoiceSummary';
@@ -444,7 +444,7 @@ const NewInvoice = () => {
   /* -------------------------------------------------------------------------- */
 
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
+    <div className="p-3 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
       {/* TOAST */}
       <Toast
         ref={toastRef}
@@ -455,7 +455,6 @@ const NewInvoice = () => {
       <header className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-slate-900">
-            <FileText className="text-blue-600" />
             New Invoice
           </h1>
         </div>

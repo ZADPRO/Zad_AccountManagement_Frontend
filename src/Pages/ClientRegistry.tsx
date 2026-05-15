@@ -115,13 +115,17 @@ const confirmDeleteAction = async () => {
         <h1 className="text-3xl font-black tracking-tighter text-slate-900">Clients</h1>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <input
+      <div className="flex flex-col md:flex-row items-stretch justify-between gap-4"> 
+        <div className="relative w-full max-w-md h-12">
+                  <i className="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                  <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search clients..."
-          className="border p-2.5 rounded-xl w-full max-w-md bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="w-full h-full pl-12 rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 transition-all"
         />
+                </div>
+        
         <button 
           onClick={() => handleAction(null, 'create')}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
