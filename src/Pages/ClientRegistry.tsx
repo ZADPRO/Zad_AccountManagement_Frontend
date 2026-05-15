@@ -110,10 +110,10 @@ const confirmDeleteAction = async () => {
   );
 
   return (
-    <div className="p-2 space-y-8 bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-black tracking-tighter text-slate-900">Clients</h1>
-      </div>
+    <div className="space-y-8 bg-slate-50 min-h-screen">
+      <header className='p-3'>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900">Client Management</h1>
+      </header>
 
       <div className="flex flex-col md:flex-row items-stretch justify-between gap-4"> 
         <div className="relative w-full max-w-md h-12">

@@ -203,7 +203,9 @@ const data = {
     win.document.write(`
       <html>
         <head>
-          <title>Invoice - ${invoice.invoicenumber}</title>
+          <title>${`Invoice_${invoice.invoicenumber}_${
+    new Date().toISOString().split("T")[0]
+  }`}</title>
           <style>
               * {
       -webkit-print-color-adjust: exact !important;
@@ -476,7 +478,7 @@ const tdsPercentage =
           )}
              <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
               <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
-                TDS ({tdsPercentage}%)
+                Less TDS ({tdsPercentage}%)
               </div>
               <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
                 {(invoice.currency)} {(invoice.tdsamount)}

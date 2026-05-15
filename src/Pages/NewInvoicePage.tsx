@@ -462,7 +462,7 @@ const NewInvoice = () => {
         <button
           disabled={isSubmitting}
           onClick={handleGenerateInvoice}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg disabled:opacity-50 shadow-blue-200"
         >
           {isSubmitting ? (
             <>
