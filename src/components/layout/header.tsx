@@ -1,9 +1,9 @@
 
 import { Avatar } from 'primereact/avatar';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const username = sessionStorage.getItem('username') || 'Guest User';
   const role = sessionStorage.getItem('role') || 'User';
 

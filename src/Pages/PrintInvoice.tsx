@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import api from "@/api/api";
-import CustomFields from "../components/invoice/CustomInvoiceFields";
+// import CustomFields from "../components/invoice/CustomInvoiceFields";
 
 // ── Types matching your Go InvoiceResponse ──
 interface CustomFieldValue {

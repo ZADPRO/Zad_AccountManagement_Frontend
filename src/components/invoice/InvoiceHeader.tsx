@@ -1,5 +1,5 @@
-import { User, Calendar, Hash, Landmark, FileCheck } from 'lucide-react';
-import { useState } from "react";
+import { User, Calendar,  Landmark, FileCheck } from 'lucide-react';
+// import { useState } from "react";
 
 interface InvoiceHeaderProps {
   clients: any[];
@@ -26,7 +26,7 @@ const InvoiceHeader = ({
   banks,
   selectedBankId,
   onBankChange,
-  invoiceNumber,
+  // invoiceNumber,
   invoiceDate,
   onDateChange,
   invoiceDueDate,

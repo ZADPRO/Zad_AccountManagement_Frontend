@@ -5,7 +5,7 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Landmark, X, Check, UploadCloud, FileImage } from 'lucide-react';
 import api from '@/api/api';  
-import { FileUpload } from 'primereact/fileupload'; 
+// import { FileUpload } from 'primereact/fileupload'; 
 
 
 interface Props {
@@ -74,38 +74,38 @@ const BankDetailsSidebar: React.FC<Props> = ({
         }
     }, [initialData, visible]);
 
-        const handleQrUpload = (e: any) => {
-        const file = e.files?.[0];
+    //     const handleQrUpload = (e: any) => {
+    //     const file = e.files?.[0];
 
-        if (!file) return;
+    //     if (!file) return;
 
-        // Validate image type
-        if (!file.type.startsWith('image/')) {
-            alert('Only image files are allowed.');
-            return;
-        }
+    //     // Validate image type
+    //     if (!file.type.startsWith('image/')) {
+    //         alert('Only image files are allowed.');
+    //         return;
+    //     }
 
-        // Validate size
-        if (file.size > MAX_FILE_SIZE) {
-            alert('File size must be less than 2MB.');
-            return;
-        }
+    //     // Validate size
+    //     if (file.size > MAX_FILE_SIZE) {
+    //         alert('File size must be less than 2MB.');
+    //         return;
+    //     }
 
-        const reader = new FileReader();
+    //     const reader = new FileReader();
 
-        reader.onloadend = () => {
-            const base64 = reader.result as string;
+    //     reader.onloadend = () => {
+    //         const base64 = reader.result as string;
 
-            setQrPreview(base64);
+    //         setQrPreview(base64);
 
-            setFormData(prev => ({
-                ...prev,
-                qrCodeUrl: base64
-            }));
-        };
+    //         setFormData(prev => ({
+    //             ...prev,
+    //             qrCodeUrl: base64
+    //         }));
+    //     };
 
-        reader.readAsDataURL(file);
-    };
+    //     reader.readAsDataURL(file);
+    // };
 
 const handleSave = async () => {
     setLoading(true);

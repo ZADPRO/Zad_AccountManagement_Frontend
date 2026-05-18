@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from 'primereact/button';
 import { 
     Landmark, Plus, Edit2, Trash2, GripVertical, 
-    Calendar, Type, MoreVertical, CheckCircle2 
+    CheckCircle2 
 } from 'lucide-react';
 import BankDetailsSidebar from '@/components/forms/BankDetails'; 
 import CustomFieldSidebar from '@/components/forms/AddFields';
@@ -39,7 +39,7 @@ const SettingsPage: React.FC = () => {
     const [loading, setLoading] = useState(false); 
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [isFieldSidebarOpen, setIsFieldSidebarOpen] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
+    // const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         const fetchBanks = async () => {
@@ -127,9 +127,9 @@ const handleSaveBank = (apiResponse: any, formData?: any) => {
 };
 
 
-    const toggleField = (id: string) => {
-        setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
-    }; 
+    // const toggleField = (id: string) => {
+    //     setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
+    // }; 
 
     const handleDelete = async (id: number) => {
     // Standard browser confirmation
