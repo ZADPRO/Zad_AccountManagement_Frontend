@@ -130,13 +130,11 @@ const UserManagement = () => {
   );
 
   return (
-    <div className="p-2 space-y-8 min-h-screen bg-slate-50 text-slate-900">
+    <div className="space-y-8 min-h-screen bg-slate-50 text-slate-900">
       <Toast ref={toast} />
       
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-slate-900">Users</h1>
-        </div>
+      <header className='p-3'>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900">User Management</h1>
       </header>
 
       {/* ✅ Search & Add (Aligned like Recipient Master) */}
@@ -154,17 +152,17 @@ const UserManagement = () => {
           label="Add User" 
           icon="pi pi-plus" 
           onClick={() => openModal()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/10"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
         />
       </div>
 
-      <div className="bg-white rounded-4xl border border-slate-200 overflow-hidden shadow-sm">
+      
         <UserTable 
           data={filteredUsers} 
           onDelete={triggerDelete} // Pass the custom trigger
           onEdit={(user, mode) => openModal(user, mode)} 
         />
-      </div>
+      
 
       <UserModal 
         key={selectedUser?.userId || 'new'}

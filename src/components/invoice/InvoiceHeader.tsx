@@ -17,7 +17,12 @@ interface InvoiceHeaderProps {
   onDueDateChange: (date: string) => void;
   invoiceType: string;
   onInvoiceTypeChange: (type: string) => void;
+   taxRate: number;
+  onTaxRateChange: (rate: number) => void;
+  tdsRate: number;
+  onTdsRateChange: (rate: number) => void;
 }
+
 
 const InvoiceHeader = ({
   clients,
@@ -33,6 +38,10 @@ const InvoiceHeader = ({
   onDueDateChange,
   invoiceType,
   onInvoiceTypeChange,
+  taxRate,
+  onTaxRateChange,
+  tdsRate,
+  onTdsRateChange,
 }: InvoiceHeaderProps) => {
   return (
     /* Changed to grid-cols-2 on medium and grid-cols-3 on large for better spacing with 5+ fields */
@@ -116,10 +125,51 @@ const InvoiceHeader = ({
           value={invoiceDueDate}
           onChange={(e) => onDueDateChange(e.target.value)}
           className="w-full bg-white border border-slate-500 rounded-2xl p-3.5 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all cursor-pointer shadow-sm"
+          
         />
       </div>
+       <div className="space-y-2">
+  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+    <Hash size={12} strokeWidth={3} className="text-blue-600" />
+    Tax Rate
+  </label>
 
-    </div>
+  <select
+    value={taxRate}
+    onChange={(e) =>
+      onTaxRateChange(Number(e.target.value))
+    }
+    className="w-full bg-white border border-slate-500 rounded-2xl p-3.5 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all appearance-none cursor-pointer shadow-sm"
+  >
+    <option value={0}>0% (Exempt)</option>
+    <option value={5}>5% (GST)</option>
+    <option value={12}>12% (GST)</option>
+    <option value={18}>18% (GST)</option>
+    <option value={28}>28% (GST)</option>
+  </select>
+</div>
+ <div className="space-y-2">
+  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+    <Hash size={12} strokeWidth={3} className="text-blue-600" />
+    Tds Rate
+  </label>
+
+  <select
+    value={tdsRate}
+    onChange={(e) =>
+      onTdsRateChange(Number(e.target.value))
+    }
+    className="w-full bg-white border border-slate-500 rounded-2xl p-3.5 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all appearance-none cursor-pointer shadow-sm"
+  >
+    <option value={0}>0% (Exempt)</option>
+    <option value={2}>2% (GST)</option>
+    <option value={5}>5% (GST)</option>
+    <option value={10}>10% (GST)</option>
+    
+  </select>
+</div>
+</div>
+
   );
 };
 

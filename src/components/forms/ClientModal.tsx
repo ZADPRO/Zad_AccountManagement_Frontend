@@ -207,7 +207,8 @@ const ClientModal = ({
     (c) => c.id === formData.billingCountryId
   );
   const isIndiaBilling = billingCountryObj?.name === "India";
-
+  const isValidGSTIN = (gstin: string) =>
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin);
   // --- Updated Step 1 Validation ---
   // --- Updated Step 1 Validation (Mandatory: Business Name, Mobile) ---
   const handleNext = (e: React.MouseEvent) => {
@@ -257,6 +258,16 @@ if (email && !isValidEmail(email)) {
     if (isIndiaBilling && (!formData.billingStateId || formData.billingStateId === 0))
       finalErrors.billingStateId = "required";
 
+    if (
+      isIndiaBilling &&
+      formData.gstStatus === "Registered"
+    ) {
+      if (!formData.gstNumber.trim()) {
+        finalErrors.gstNumber = "required";
+      } else if (!isValidGSTIN(formData.gstNumber.toUpperCase())) {
+        finalErrors.gstNumber = "invalid GSTIN";
+      }
+    }
     if (Object.keys(finalErrors).length > 0) {
       setErrors(finalErrors);
       return;

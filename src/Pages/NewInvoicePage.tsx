@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FileText, Send, Loader2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 import InvoiceItemsTable from '../components/invoice/InvoiceItemsTable';
 import InvoiceSummary from '../components/invoice/InvoiceSummary';
@@ -118,6 +118,10 @@ const NewInvoice = () => {
   // ✅ INVOICE TYPE
   const [invoiceType, setInvoiceType] = useState('invoice');
 
+   const [taxRate, setTaxRate] = useState(18);
+   const [tdsRate, setTdsRate] = useState(2);
+ 
+
   /* -------------------------------------------------------------------------- */
   /*                               CALCULATIONS                                 */
   /* -------------------------------------------------------------------------- */
@@ -127,18 +131,17 @@ const NewInvoice = () => {
     0
   );
 
-  const taxRate = 18;
-  const tdsRate = 2;
+ 
 
-  const isExport =
-    fullClientDetails?.countryName?.toLowerCase() !== "india";
+  // const isExport =
+  //   fullClientDetails?.countryName?.toLowerCase() !== "india";
 
   const isInterState =
     fullClientDetails?.stateName !== MY_BUSINESS_STATE;
 
-  const activeTaxRate = isExport ? 0 : taxRate;
+  // const activeTaxRate = isExport ? 0 : taxRate;
 
-  const gstAmount = (subtotal * activeTaxRate) / 100;
+  const gstAmount = (subtotal * taxRate) / 100;
 
   const tdsAmount = (subtotal * tdsRate) / 100;
 
@@ -218,6 +221,9 @@ const NewInvoice = () => {
       paymentstatus: "pending",
 
       updatedby: getStoredUserId(),
+
+      taxamount:  gstAmount,
+      tdsamount: tdsAmount,
 
       // ✅ ITEMS WITH CUSTOM FIELDS
       items: items.map((item: any) => ({
@@ -438,7 +444,7 @@ const NewInvoice = () => {
   /* -------------------------------------------------------------------------- */
 
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
+    <div className="p-3 max-w-7xl mx-auto bg-slate-50 min-h-screen text-slate-900">
       {/* TOAST */}
       <Toast
         ref={toastRef}
@@ -449,7 +455,6 @@ const NewInvoice = () => {
       <header className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-slate-900">
-            <FileText className="text-blue-600" />
             New Invoice
           </h1>
         </div>
@@ -457,7 +462,7 @@ const NewInvoice = () => {
         <button
           disabled={isSubmitting}
           onClick={handleGenerateInvoice}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg disabled:opacity-50 shadow-blue-200"
         >
           {isSubmitting ? (
             <>
@@ -516,8 +521,15 @@ const NewInvoice = () => {
               onInvoiceTypeChange={
                 setInvoiceType
               }
-            />
+             taxRate={taxRate}
+  onTaxRateChange={setTaxRate}
+  
 
+   tdsRate={tdsRate}
+  onTdsRateChange={setTdsRate}
+/>
+            
+          
             {/* CUSTOM FIELDS + CURRENCY */}
             <div className="grid grid-cols-3 gap-6 mb-8">
               <CustomFields
@@ -553,7 +565,7 @@ const NewInvoice = () => {
         <div className="space-y-6">
           <InvoiceSummary
             subtotal={subtotal}
-            taxRate={activeTaxRate}
+            taxRate={taxRate}
             tdsRate={tdsRate}
             isInterState={
               isInterState

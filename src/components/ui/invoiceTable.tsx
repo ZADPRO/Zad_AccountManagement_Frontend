@@ -27,28 +27,28 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
 
   return (
     <div className="w-full">
-      <div className="w-full overflow-y-auto max-h-[600px]">
+      <div className="relative w-full overflow-y-auto max-h-150 rounded-xl border border-slate-100 bg-white custom-scrollbar">
       {/* Table */}
-      <table className="w-full text-left border-collapse">
+      <table className="w-full text-left border-separate border-spacing-0">
 
         {/* Header */}
-        <thead className="sticky top-0 z-10">
-          <tr className="border-b border-slate-100 bg-slate-50">
-            <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Invoice / ID</th>
-            <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Client</th>
-            <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Amount</th>
-            <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-            <th className="py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Due Date</th>
-            <th className="py-4 px-6 text-right"></th>
+        <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
+          <tr className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <th className="px-6 py-5 border-b border-slate-200">Invoice / ID</th>
+            <th className="px-6 py-5 border-b border-slate-200">Client</th>
+            <th className="px-6 py-5 border-b border-slate-200">Amount</th>
+            <th className="px-6 py-5 border-b border-slate-200">Status</th>
+            <th className="px-6 py-5 border-b border-slate-200">Due Date</th>
+            <th className="px-6 py-5 border-b border-slate-200 text-right"></th>
           </tr>
         </thead>
 
         {/* Body */}
-        <tbody className="divide-y divide-slate-50">
+        <tbody className="divide-y divide-slate-100">
           {data.map((invoice) => (
             <tr
               key={invoice.id}
-              className="group hover:bg-blue-50/30 transition-all"
+              className="group hover:bg-slate-50 transition-all"
             >
 
               {/* Invoice */}

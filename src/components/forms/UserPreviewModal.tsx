@@ -22,7 +22,7 @@ useEffect(() => {
         // 1. Axios handles the token via the interceptor automatically
         // 2. No need for manual 'Content-Type' or 'Authorization' headers
         const res = await api.get(`/users/${userId}`);
-
+        console.log(res)
         // 3. Axios puts the response body directly in .data
         // Based on your backend structure: res.data is the full JSON, res.data.data is the user
         if (res.data.status) {
@@ -117,27 +117,6 @@ useEffect(() => {
       <span className="text-slate-400 block text-[10px] uppercase font-bold mb-0.5">Email Address</span>
       <span className="font-bold text-slate-900 break-all">{user.email}</span>
     </div>
-                </div>
-              </div>
-
-              {/* Audit/System Section */}
-              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
-                    <Calendar size={12} /> System History
-                </h4>
-                <div className="grid grid-cols-2 gap-y-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold mb-0.5">Created On</span>
-                    <span className="font-bold text-slate-900">{user.createdAt}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold mb-0.5">Created By</span>
-                    <span className="font-bold text-slate-900">ID: {user.createdBy}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold mb-0.5">Last Record Update</span>
-                    <span className="font-bold text-slate-900">{user.updatedAt}</span>
-                  </div>
                 </div>
               </div>
             </div>

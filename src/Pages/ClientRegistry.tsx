@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Users,  ShieldCheck } from 'lucide-react';
+import { Plus } from 'lucide-react';
 // import { useAuth } from '../context/AuthContext';
 import Table from '../components/ui/ClientTable';
 import ClientModal from '../components/forms/ClientModal';
 import ClientPreviewModal from '@/components/forms/ClientPreviewModal'; // New Component
-import StatCard from '../components/ui/StatCard';
+// import StatCard from '../components/ui/StatCard';
 import { type ClientListModel } from '../types/clients'; 
 import api from '@/api/api';
 import { Button } from 'primereact/button';
@@ -110,24 +110,22 @@ const confirmDeleteAction = async () => {
   );
 
   return (
-    <div className="p-2 space-y-8 bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-black tracking-tighter text-slate-900">Clients</h1>
-      </div>
+    <div className="space-y-8 bg-slate-50 min-h-screen">
+      <header className='p-3'>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900">Client Management</h1>
+      </header>
 
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Total" value={clients.length} icon={<Users />} />
-        <StatCard label="Active" value={clients.filter(c => c.isActive).length} icon={<ShieldCheck />} />
-        
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <input
+      <div className="flex flex-col md:flex-row items-stretch justify-between gap-4"> 
+        <div className="relative w-full max-w-md h-12">
+                  <i className="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                  <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search clients..."
-          className="border p-2.5 rounded-xl w-full max-w-md bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="w-full h-full pl-12 rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 transition-all"
         />
+                </div>
+        
         <button 
           onClick={() => handleAction(null, 'create')}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
