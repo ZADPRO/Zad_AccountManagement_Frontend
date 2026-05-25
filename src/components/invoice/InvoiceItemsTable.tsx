@@ -7,7 +7,6 @@ import { Plus, Trash2 } from "lucide-react";
 interface Item {
   id: string;
   description: string;
-  quantity: number;
   rate: number;
   amount: number;
   customFieldValues: {
@@ -58,7 +57,6 @@ const InvoiceItemsTable = ({
       {
         id: Date.now().toString(),
         description: "",
-        quantity: 1,
         rate: 0,
         amount: 0,
         customFieldValues: [],
@@ -89,20 +87,15 @@ const InvoiceItemsTable = ({
   [field]: value,
 };
 
-const quantity = Math.max(
-  1,
-  Number(updatedItem.quantity)
-);
-
 const rate = Math.max(
   0,
   Number(updatedItem.rate)
 );
 
-updatedItem.quantity = quantity;
 updatedItem.rate = rate;
 
-updatedItem.amount = quantity * rate;
+// Temporary default quantity = 1
+updatedItem.amount = 1 * rate;
 
 /* =====================================================
    HANDLE CUSTOM FIELD VALUES
@@ -166,7 +159,7 @@ return updatedItem;
             <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 
               <th className="py-4 px-3 min-w-62.5">Description</th>
-              <th className="py-4 px-3 w-24">Qty</th>
+              
               <th className="py-4 px-3 w-36">Rate ({currency})</th>
 
               {/* One <th> per user-selected custom field */}
@@ -200,22 +193,7 @@ return updatedItem;
         />
       </td>
 
-      {/* QUANTITY */}
-      <td className="py-3 px-2 w-[14%]">
-        <input
-          type="number"
-          min={1}
-          value={item.quantity}
-          onChange={(e) =>
-            updateItem(
-              item.id,
-              "quantity",
-              Math.max(1, parseInt(e.target.value) || 1)
-            )
-          }
-          className="w-full min-w-25 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
-        />
-      </td>
+      
 
       {/* RATE */}
       <td className="py-3 px-2 w-[18%]">

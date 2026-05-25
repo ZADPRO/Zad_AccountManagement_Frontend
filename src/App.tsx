@@ -4,6 +4,8 @@ import Shell from './components/layout/shell';
 import RecipientMaster from './Pages/ClientRegistry';
 import UserManagement from './Pages/UserManagement';
 import NewInvoice from './Pages/NewInvoicePage'; 
+import { ConfirmDialog } from "primereact/confirmdialog";
+
  
 
 import LoginPage from './Pages/LoginPage'; 
@@ -53,6 +55,8 @@ const AppContent = () => {
 
   // 4. Fully Logged in: Standard role-based routing with Shell
   return (
+    <>
+    <ConfirmDialog />
     <Routes>
       {/* Root redirect based on role */}
       <Route 
@@ -85,6 +89,7 @@ const AppContent = () => {
       {/* Catch-all: Redirect to root if route doesn't exist */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 };
 

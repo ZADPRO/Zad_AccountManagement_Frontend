@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "primereact/button";
-import {
-  Landmark,
-  Plus,
-  Edit2,
-  Trash2,
-  GripVertical,
-  CheckCircle2,
-} from "lucide-react";
+import { Landmark, Plus } from "lucide-react";
 import BankDetailsSidebar from "@/components/forms/BankDetails";
 import CustomFieldSidebar from "@/components/forms/AddFields";
 import api from "@/api/api";
+import SigningAuthoritySidebar from "../components/forms/SigningAuthoritySidebar";
 
 // Interfaces matching your Go backend logic
 interface BankAccount {
@@ -27,7 +20,7 @@ interface BankAccount {
 }
 
 interface CustomField {
-  id: string;
+  id: number;
   label: string;
   type: "Text" | "Date" | "Number";
   isRequired: boolean;
@@ -35,109 +28,97 @@ interface CustomField {
 }
 
 const SettingsPage: React.FC = () => {
-  // --- State Management ---
+  // --- State Management (CLEANED UP - NO DUPLICATES) ---
+  const [setLoading] = useState(false);
+  
+  // Bank State
   const [banks, setBanks] = useState<BankAccount[]>([]);
   const [isBankSidebarOpen, setIsBankSidebarOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState<BankAccount | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  // Custom Field State
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [isFieldSidebarOpen, setIsFieldSidebarOpen] = useState(false);
-  // const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedField, setSelectedField] = useState<CustomField | null>(null);
 
+  // Signature Authority State
+  const [authorities, setAuthorities] = useState<any[]>([]);
+  const [selectedAuthority, setSelectedAuthority] = useState<any>(null);
+  const [isSignatureSidebarOpen, setIsSignatureSidebarOpen] = useState(false);
+
+  // --- Fetching Data ---
   useEffect(() => {
     const fetchBanks = async () => {
-      setLoading(true);
       try {
         const res = await api.get("/banking/current");
-        // Map the slice/array from backend and normalize the ID
         const bankList = (res.data.data || []).map((b: any) => ({
           ...b,
-          id: b.detailsId, // Map backend DetailsID to frontend id
+          id: b.detailsId,
         }));
         setBanks(bankList);
       } catch (err) {
         console.error("Error fetching banks:", err);
-      } finally {
-        setLoading(false);
       }
+      // Deleted the 'finally' block that had setLoading(false)
     };
 
     const fetchFields = async () => {
       try {
         const res = await api.get("/custom-fields");
-        console.log("Full Response Object:", res);
-
-        // FIX: Access 'fields' instead of 'data' based on your console output
         const rawData = res.data?.fields || [];
-
         const fieldslist = rawData.map((f: any) => ({
-          id: String(f.fieldId),
+          id: f.fieldId,
           label: f.fieldLabel,
           type: f.fieldType,
           isRequired: f.isRequired,
-          // You can check if the field is deleted or active here
           active: !f.deletedAt,
         }));
-
         setCustomFields(fieldslist);
       } catch (err) {
         console.error("Error fetching custom fields:", err);
       }
     };
+
+    const fetchAuthorities = async () => {
+      try {
+        const res = await api.get("/signature-authorities");
+        setAuthorities(res.data || []);
+      } catch (err) {
+        console.error("Error fetching authorities:", err);
+      }
+    };
+
     fetchBanks();
     fetchFields();
+    fetchAuthorities();
   }, []);
 
+  // --- Handlers ---
   const handleSaveBank = (apiResponse: any, formData?: any) => {
-    // According to your console log, the data is directly in apiResponse or apiResponse.data
-    // structure: { detailsId: 17, message: '...', status: true }
     const responseData = apiResponse.data || apiResponse;
     const bankId = responseData.detailsId || responseData.id;
-    if (!bankId) {
-      console.error("No ID found, cannot update UI state");
-      return;
-    }
-    setBanks((prev) => {
-      // 🔍 Check if this bank already exists in our local state
-      const exists = prev.find((b) => b.id === bankId);
+    if (!bankId) return;
 
+    setBanks((prev) => {
+      const exists = prev.find((b) => b.id === bankId);
       if (exists) {
-        // 🔁 UPDATE: Map through and replace the specific bank
         return prev.map((b) =>
-          b.id === bankId ? { ...b, ...responseData, id: bankId } : b,
+          b.id === bankId ? { ...b, ...formData, ...responseData, id: bankId } : b
         );
       }
-
-      // 🆕 CREATE: Add the new bank to the array
-      // We ensure 'id' is set to 'detailsId' so the 'exists' check works next time
       const newBankEntry: BankAccount = {
         ...formData,
         ...responseData,
         id: bankId,
-        // If the backend doesn't return the full object on create,
-        // you might need to merge with your local sidebar state,
-        // but usually, the backend returns the created record.
       };
-
       return [...prev, newBankEntry];
     });
   };
 
-  // const toggleField = (id: string) => {
-  //     setCustomFields(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
-  // };
-
   const handleDelete = async (id: number) => {
-    // Standard browser confirmation
-    if (!window.confirm("Are you sure you want to remove this bank account?"))
-      return;
-
     try {
-      // This matches the backend route: DELETE /banking/:id
       const res = await api.delete(`/banking/${id}`);
-
       if (res.data.status) {
-        // Remove from local state so the UI updates instantly
         setBanks((prev) => prev.filter((bank) => bank.id !== id));
       }
     } catch (err) {
@@ -146,217 +127,225 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleSaveField = (decryptedResponse: any) => {
-    // 1. Extract the data object from the response wrapper
-    const data = decryptedResponse.data || decryptedResponse;
+  const handleEditField = (field: CustomField) => {
+    setSelectedField(field);
+    setIsFieldSidebarOpen(true);
+  };
 
-    // 2. Map the backend response to the CustomField interface
-    const newField: CustomField = {
-      id: String(data.fieldId), // Backend 'fieldId' -> Frontend 'id'
-      label: data.fieldLabel, // Backend 'fieldLabel' -> Frontend 'label'
-      type: data.fieldType as "Text" | "Date" | "Number",
-      isRequired: Boolean(data.isRequired),
-      active: true, // Newly created fields are active by default
-    };
-
-    // 3. Update state to reflect the new field in the UI immediately
-    setCustomFields((prev) => [...prev, newField]);
-
-    // 4. Close the sidebar/modal
+  const handleSaveField = (decryptedResponse: any, formData?: any, isEdit?: boolean) => {
+    if (isEdit) {
+      setCustomFields((prev) =>
+        prev.map((field) =>
+          field.id === decryptedResponse?.id
+            ? {
+                ...field,
+                label: formData?.fieldLabel,
+                type:
+                  formData?.fieldType === "text"
+                    ? "Text"
+                    : formData?.fieldType === "number"
+                    ? "Number"
+                    : formData?.fieldType === "date"
+                    ? "Date"
+                    : "Text",
+                isRequired: Boolean(formData?.isRequired),
+              }
+            : field
+        )
+      );
+    } else {
+      const data = decryptedResponse.data || decryptedResponse;
+      const newField: CustomField = {
+        id: Number(data.id) || Number(data.fieldId),
+        label: formData?.fieldLabel || data.fieldLabel,
+        type:
+          formData?.fieldType === "text"
+            ? "Text"
+            : formData?.fieldType === "number"
+            ? "Number"
+            : formData?.fieldType === "date"
+            ? "Date"
+            : "Text",
+        isRequired: Boolean(formData?.isRequired),
+        active: true,
+      };
+      setCustomFields((prev) => [...prev, newField]);
+    }
     setIsFieldSidebarOpen(false);
   };
 
-  const handleDeleteField = async (id: string) => {
-    if (
-      !window.confirm("Delete this field? Existing invoices won't be affected.")
-    )
-      return;
+  const handleDeleteField = async (id: number) => {
     try {
-      const res = await api.delete(`/custom-fields/${id}`);
+      const res = await api.delete("/custom-fields/" + Number(id));
       if (res.data.status) {
-        setCustomFields((prev) => prev.filter((f) => f.id !== id));
+        setCustomFields((prev: any[]) => prev.filter((field) => field.id !== id));
       }
     } catch (err) {
-      console.error("Delete field failed:", err);
+      console.error("Delete failed:", err);
+    }
+  };
+
+  const handleSaveAuthority = (response: any, formData?: any, isEdit?: boolean) => {
+    if (isEdit) {
+      setAuthorities((prev) =>
+        prev.map((a) => (a.id === response.id ? { ...a, ...formData } : a))
+      );
+    } else {
+      const data = response.data || response;
+      const newAuthority = { ...data };
+      setAuthorities((prev) => [...prev, newAuthority]);
+    }
+    setIsSignatureSidebarOpen(false);
+  };
+
+  const handleDeleteAuthority = async (id: number) => {
+    try {
+      await api.delete(`/signature-authorities/${id}`);
+      setAuthorities((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
-    <div className="p-3 max-w-5xl mx-auto bg-slate-50 min-h-screen text-slate-900 font-sans">
-      {/* Header Area */}
-      <header className="mb-8">
-        <h1 className="text-3xl font-black tracking-tighter text-slate-900">
-          Invoice settings
+    <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen text-slate-900 font-sans">
+      {/* Header */}
+      <header className="mb-10">
+        <h1 className="text-4xl font-black tracking-tight text-slate-900">
+          Invoice Settings
         </h1>
+        <p className="text-slate-400 font-medium mt-2">
+          Configure banking and invoice field settings
+        </p>
       </header>
 
-      {/* --- Banking Details Section --- */}
-      <section className="mb-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-800">
-              Banking details
-            </h2>
-            <p className="text-sm text-slate-400 font-medium">
-              Add multiple accounts for client payments.
-            </p>
-          </div>
-          <Button
-            label="Add bank account"
-            icon={<Plus size={18} className="mr-2" />}
-            onClick={() => {
-              setSelectedBank(null);
-              setIsBankSidebarOpen(true);
-            }}
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20"
-          />
-        </div>
-
-        <div className="grid gap-1">
-          {banks.length === 0 ? (
-            <div className="p-12 border-2 border-dashed border-slate-200 rounded-4xl text-center bg-white/50">
-              <Landmark size={40} className="mx-auto text-slate-200 mb-4" />
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
-                No accounts linked yet
+      {/* Settings Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Banking Details Card */}
+        <div
+          onClick={() => {
+            setSelectedBank(null);
+            setIsBankSidebarOpen(true);
+          }}
+          className="cursor-pointer bg-white border border-slate-200 rounded-3xl p-8 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800">
+                Banking Details
+              </h2>
+              <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+                Add and manage bank accounts used for invoice payments.
               </p>
-            </div>
-          ) : (
-            banks.map((bank, idx) => (
-              <div
-                key={idx}
-                className="group flex items-center justify-between p-4 bg-white border border-slate-200 rounded-4xl hover:border-blue-400 transition-all hover:shadow-lg hover:shadow-blue-500/5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
-                    <Landmark size={24} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <span className="font-extrabold text-slate-900 text-lg">
-                        {bank.bankName}
-                      </span>
-                      {bank.isDefault && (
-                        <span className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-tighter rounded-full">
-                          <CheckCircle2 size={12} /> Default
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs font-bold text-slate-400 mt-0.3 tracking-tight">
-                      {bank.accountNumber} • {bank.accountType} •{" "}
-                      {bank.ifscCode}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      setSelectedBank(bank);
-                      setIsBankSidebarOpen(true);
-                    }}
-                    className="p-3 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Ensure bank.id exists before calling delete
-                      if (bank.id) {
-                        handleDelete(bank.id);
-                      }
-                    }}
-                    className="p-3 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+              <div className="mt-5 inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-wider">
+                {banks.length} Accounts
               </div>
-            ))
-          )}
+            </div>
+            <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-all">
+              <Landmark size={34} />
+            </div>
+          </div>
         </div>
-      </section>
 
-      <hr className="border-slate-200 mb-10" />
+        {/* Custom Fields Card */}
+        <div
+          onClick={() => {
+            setSelectedField(null);
+            setIsFieldSidebarOpen(true);
+          }}
+          className="cursor-pointer bg-white border border-slate-200 rounded-3xl p-8 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800">
+                Custom Fields
+              </h2>
+              <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+                Configure dynamic invoice fields and metadata.
+              </p>
+              <div className="mt-5 inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-wider">
+                {customFields.length} Fields
+              </div>
+            </div>
+            <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-all">
+              <Plus size={34} />
+            </div>
+          </div>
+        </div>
 
-      {/* Sidebar Component */}
+        {/* Signing Authority Card */}
+        <div
+          onClick={() => {
+            setSelectedAuthority(null);
+            setIsSignatureSidebarOpen(true);
+          }}
+          className="cursor-pointer bg-white border border-slate-200 rounded-3xl p-8 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800">
+                Signing Authority
+              </h2>
+              <p className="text-sm text-slate-400 mt-3 leading-relaxed">
+                Configure invoice signing authorities.
+              </p>
+              <div className="mt-5 inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-wider">
+                Authorities
+              </div>
+            </div>
+            <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-all text-3xl">
+              ✍️
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Banking Sidebar */}
       <BankDetailsSidebar
         visible={isBankSidebarOpen}
         onHide={() => {
           setIsBankSidebarOpen(false);
-          setSelectedBank(null); // 💡 Crucial: Reset to null so "Add" mode works next time
+          setSelectedBank(null);
         }}
         onSave={handleSaveBank}
-        loading={loading}
-        initialData={selectedBank} // For Edit Mode logic
+        initialData={selectedBank}
+        banks={banks}
+        onEdit={(bank) => {
+          setSelectedBank(bank);
+          setIsBankSidebarOpen(true);
+        }}
+        onDelete={handleDelete}
       />
-      {/* --- Custom Fields Section --- */}
-      <section className="mb-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-800">
-              Custom invoice fields
-            </h2>
-            <p className="text-sm text-slate-400 font-medium">
-              Extra metadata shown on your generated PDF documents.
-            </p>
-          </div>
-          <Button
-            label="New field"
-            icon={<Plus size={18} className="mr-2" />}
-            onClick={() => setIsFieldSidebarOpen(true)} // Open Sidebar
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20"
-          />
-        </div>
 
-        <div className="space-y-3">
-          {customFields.length === 0 ? (
-            <p className="text-center text-slate-400 py-10 border-2 border-dashed rounded-3xl">
-              No custom fields defined.
-            </p>
-          ) : (
-            customFields.map((field) => (
-              <div
-                key={field.id}
-                className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-3xl"
-              >
-                <div className="flex items-center gap-5">
-                  <GripVertical
-                    size={20}
-                    className="text-slate-300 cursor-grab"
-                  />
-                  <span className="font-black text-slate-800">
-                    {field.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-8">
-                  <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] bg-slate-50 px-3 py-1.5 rounded-lg">
-                    {field.type}
-                  </span>
-                  {field.isRequired && (
-                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest">
-                      Required
-                    </span>
-                  )}
-                  <div className="flex items-center gap-1 border-l border-slate-100 pl-6 text-slate-300">
-                    {/* Pass field.id to delete handler */}
-                    <button
-                      onClick={() => handleDeleteField(field.id)}
-                      className="p-2 hover:text-rose-600 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Add the Custom Field Sidebar component here */}
+      {/* Custom Fields Sidebar */}
       <CustomFieldSidebar
         visible={isFieldSidebarOpen}
-        onHide={() => setIsFieldSidebarOpen(false)}
+        onHide={() => {
+          setIsFieldSidebarOpen(false);
+          setSelectedField(null);
+        }}
         onSave={handleSaveField}
+        initialData={selectedField}
+        fields={customFields}
+        onEdit={handleEditField}
+        onDelete={handleDeleteField}
+      />
+
+      {/* Signing Authority Sidebar */}
+      <SigningAuthoritySidebar
+        visible={isSignatureSidebarOpen}
+        onHide={() => {
+          setIsSignatureSidebarOpen(false);
+          setSelectedAuthority(null);
+        }}
+        authorities={authorities}
+        initialData={selectedAuthority}
+        onEdit={(authority) => {
+          setSelectedAuthority(authority);
+          setIsSignatureSidebarOpen(true);
+        }}
+        onDelete={handleDeleteAuthority}
+        onSave={handleSaveAuthority}
       />
     </div>
   );

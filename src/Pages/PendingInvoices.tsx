@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Clock, AlertCircle, AlertTriangle, X } from 'lucide-react'; // ✅ ADDED AlertTriangle & X
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/ui/StatCard';
 import InvoiceListTable from '@/components/ui/invoiceTable';
@@ -24,25 +24,23 @@ const PendingInvoices = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // UI State management
- 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   
+  // ✅ NEW: Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<number | null>(null);
   
   // Fetch Invoices
   useEffect(() => {
     const fetchInvoices = async () => {
       setIsLoading(true);
       try {
-        // const token = sessionStorage.getItem('token');
         const res = await api.get('/invoices');
         
-        
-        // 1. Access the 'data' key from your backend
         const rawData = res.data.data || [];
 
-        // 2. Map the lowercase backend keys to your frontend model
         const mappedInvoices: InvoiceListModel[] = rawData.map((inv: any) => ({
           id: inv.invoiceid,
           invoiceNumber: inv.invoicenumber,
@@ -62,56 +60,53 @@ const PendingInvoices = () => {
     fetchInvoices();
   }, [refreshKey]); 
 
-  
+  const handleView = (invoice: InvoiceListModel) => {
+    setSelectedInvoiceId(invoice.id);
+    setIsPrintMode(false);
+    setIsViewOpen(true);
+  };
 
-const handleView = (invoice: InvoiceListModel) => {
-  setSelectedInvoiceId(invoice.id);
-  setIsPrintMode(false);
-  setIsViewOpen(true);
-};
-const handlePrint = (invoice: InvoiceListModel) => {
-  setSelectedInvoiceId(invoice.id);
-  setIsPrintMode(true);
-  setIsViewOpen(true);
-};
+  const handlePrint = (invoice: InvoiceListModel) => {
+    setSelectedInvoiceId(invoice.id);
+    setIsPrintMode(true);
+    setIsViewOpen(true);
+  };
 
-const handleDelete = async (id: number) => {
+  // ✅ 1. OPENS THE MODAL (Instead of native confirm)
+  const handleDelete = (id: number) => {
+    setInvoiceToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
 
-  const confirmed = window.confirm(
-    "Void this invoice? This action cannot be undone."
-  );
+  // ✅ 2. ACTUALLY EXECUTES THE DELETE WHEN "YES" IS CLICKED
+  const confirmDelete = async () => {
+    if (!invoiceToDelete) return;
 
-  if (!confirmed) return;
+    try {
+      const token = sessionStorage.getItem("token");
 
-  try {
-    const token = sessionStorage.getItem("token");
+      await api.delete(`/invoices/${invoiceToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const res = await api.delete(`/invoices/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      // Refresh invoice list and close modal
+      setRefreshKey((prev) => prev + 1);
+      setIsDeleteModalOpen(false);
+      setInvoiceToDelete(null);
 
-    // ✅ Success
-    alert(
-      res.data?.message ||
-      "Invoice deleted successfully"
-    );
-
-    // ✅ Refresh invoice list
-    setRefreshKey((prev) => prev + 1);
-
-  } catch (err: any) {
-
-    console.error("Delete failed:", err);
-
-    alert(
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      "Failed to delete invoice"
-    );
-  }
-};
+    } catch (err: any) {
+      console.error("Delete failed:", err);
+      alert(
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Failed to delete invoice"
+      );
+      setIsDeleteModalOpen(false);
+      setInvoiceToDelete(null);
+    }
+  };
 
   const filteredInvoices = invoices.filter(inv =>
     inv.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -166,41 +161,87 @@ const handleDelete = async (id: number) => {
       </div>
 
         
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <InvoiceListTable
-            data={filteredInvoices}
-            onView={handleView}
-            onPrint={handlePrint}
-            onDelete={handleDelete}
-          />
-        )}
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <InvoiceListTable
+          data={filteredInvoices}
+          onView={handleView}
+          onPrint={handlePrint}
+          onDelete={handleDelete}
+        />
+      )}
 
 
-      {/* ✅ MODAL */}
-     {isViewOpen && selectedInvoiceId && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      {/* PRINT/VIEW MODAL */}
+      {isViewOpen && selectedInvoiceId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white \w-[900px]\ max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-4 relative">
+            <button
+              onClick={() => setIsViewOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
+            >
+              ✕
+            </button>
+            <InvoicePrint 
+              invoiceId={selectedInvoiceId} 
+              autoPrint={isPrintMode} 
+            />
+          </div>
+        </div>
+      )}
 
-    <div className="bg-white \w-[900px]\ max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-4 relative">
+      {/* ✅ NEW: CUSTOM DELETE CONFIRMATION MODAL */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4">
+          
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center p-5 border-b border-slate-100">
+              <h3 className="font-bold text-lg text-slate-800">Delete Confirmation</h3>
+              <button 
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setInvoiceToDelete(null);
+                }} 
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-      {/* Close Button */}
-      <button
-        onClick={() => setIsViewOpen(false)}
-        className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
-      >
-        ✕
-      </button>
+            {/* Body */}
+            <div className="p-6 flex items-start gap-4">
+              <AlertTriangle className="text-slate-600 shrink-0 mt-0.5" size={24} />
+              <p className="text-slate-600 text-[15px] leading-relaxed">
+                Void this invoice? This action cannot be undone.
+              </p>
+            </div>
 
-      {/* 👇 THIS IS THE IMPORTANT PART */}
-      <InvoicePrint 
-        invoiceId={selectedInvoiceId} 
-        autoPrint={isPrintMode}   // NEW PROP
-      />
+            {/* Footer */}
+            <div className="p-5 flex justify-end gap-3 bg-white">
+              <button
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setInvoiceToDelete(null);
+                }}
+                className="px-6 py-2.5 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-6 py-2.5 text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors shadow-sm shadow-rose-200"
+              >
+                Yes
+              </button>
+            </div>
 
-    </div>
-  </div>
-)}
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 };
