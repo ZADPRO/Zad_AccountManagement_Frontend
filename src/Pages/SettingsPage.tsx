@@ -29,7 +29,7 @@ interface CustomField {
 
 const SettingsPage: React.FC = () => {
   // --- State Management (CLEANED UP - NO DUPLICATES) ---
-  const [setLoading] = useState(false);
+  
   
   // Bank State
   const [banks, setBanks] = useState<BankAccount[]>([]);
