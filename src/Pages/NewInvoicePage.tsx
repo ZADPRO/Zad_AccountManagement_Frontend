@@ -6,7 +6,7 @@ import InvoiceSummary from '../components/invoice/InvoiceSummary';
 import InvoiceHeader from '@/components/invoice/InvoiceHeader';
 import CustomFields from "../components/invoice/CustomInvoiceFields";
 import CurrencyDropdown from "../components/invoice/CurrencyDropdown";
-
+import { getSignatureAuthorities } from "../api/signatureAuthorityApi";
 import { type ClientListModel } from '@/types/clients';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/api';
@@ -16,9 +16,9 @@ import { Toast } from 'primereact/toast';
 /*                                  INTERFACES                                */
 /* -------------------------------------------------------------------------- */
 interface CustomFieldDefinition {
-  id: number;
-  label: string;
-  type: string;
+  fieldId: number;
+  fieldLabel: string;
+  fieldType: string;
   isRequired?: boolean;
   active?: boolean;
 }
@@ -41,7 +41,7 @@ const getStoredUserId = () => {
 interface InvoiceItem {
   id: string;
   description: string;
-  quantity: number;
+  
   rate: number;
   amount: number;
 
@@ -61,7 +61,7 @@ const NewInvoice = () => {
   const navigate = useNavigate();
   const toastRef = useRef<Toast>(null);
 
-  const MY_BUSINESS_STATE = "Tamil Nadu";
+  
 
   /* -------------------------------------------------------------------------- */
   /*                                   STATES                                   */
@@ -72,12 +72,14 @@ const NewInvoice = () => {
     {
       id: '1',
       description: '',
-      quantity: 1,
+      
       rate: 0,
       amount: 0,
       customFieldValues: [],
     },
   ]);
+  
+  const [adjustment, setAdjustment] = useState<number>(0);
 
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -118,12 +120,53 @@ const NewInvoice = () => {
   // ✅ INVOICE TYPE
   const [invoiceType, setInvoiceType] = useState('invoice');
 
-   const [taxRate, setTaxRate] = useState(18);
-   const [tdsRate, setTdsRate] = useState(2);
- 
+  const [signatureAuthorities, setSignatureAuthorities] = useState<any[]>([]);
+  const [selectedSignatureAuthority, setSelectedSignatureAuthority] =
+  useState("");
+
+   const [taxType, setTaxType] = useState(
+  "IGST @ 18%"
+    );
+
+    
+
+  const handleClientChange = (
+  clientId: string
+) => {
+
+  setSelectedClientId(clientId);
+
+  const selectedClient = clients.find(
+    (client: any) =>
+      String(
+        client.clientId || client.id
+      ) === clientId
+  );
+
+  if (!selectedClient) return;
+
+  const clientState =
+  fullClientDetails?.stateName?.toLowerCase() || "";
+
+  if (
+    clientState === "tamil nadu" ||
+    clientState === "tamilnadu"
+  ) {
+
+    setTaxType(
+      "CGST @ 9% + SGST @ 9%"
+    );
+
+  } else {
+
+    setTaxType(
+      "IGST @ 18%"
+    );
+  }
+};
 
   /* -------------------------------------------------------------------------- */
-  /*                               CALCULATIONS                                 */
+  /* CALCULATIONS                                 */
   /* -------------------------------------------------------------------------- */
 
   const subtotal = items.reduce(
@@ -131,22 +174,41 @@ const NewInvoice = () => {
     0
   );
 
- 
+  const gstAmount = (subtotal * 18) / 100;
 
-  // const isExport =
-  //   fullClientDetails?.countryName?.toLowerCase() !== "india";
+  const cgstAmount =
+    taxType === "CGST @ 9% + SGST @ 9%"
+      ? gstAmount / 2
+      : 0;
 
-  const isInterState =
-    fullClientDetails?.stateName !== MY_BUSINESS_STATE;
+  const sgstAmount =
+    taxType === "CGST @ 9% + SGST @ 9%"
+      ? gstAmount / 2
+      : 0;
 
-  // const activeTaxRate = isExport ? 0 : taxRate;
+  const igstAmount =
+    taxType === "IGST @ 18%"
+      ? gstAmount
+      : 0;
+  
+  // 1. Calculate raw total before any adjustment
+  const rawTotal = subtotal + gstAmount;
 
-  const gstAmount = (subtotal * taxRate) / 100;
+  // 2. Automatically calculate round-off if there's a decimal
+  useEffect(() => {
+    if (rawTotal % 1 !== 0) {
+      const rounded = Math.round(rawTotal);       // Find nearest whole number
+      const diff = rounded - rawTotal;            // Find the exact difference
+      setAdjustment(Number(diff.toFixed(2)));     // Update the state
+    } else {
+      setAdjustment(0);                           // Reset to 0 if it's a clean number
+    }
+  }, [rawTotal]);
 
-  const tdsAmount = (subtotal * tdsRate) / 100;
+  // 3. Final grand total
+  const grandTotal = rawTotal + Number(adjustment);
 
-  const grandTotal = subtotal + gstAmount - tdsAmount;
-
+  
   /* -------------------------------------------------------------------------- */
   /*                                   TOASTS                                   */
   /* -------------------------------------------------------------------------- */
@@ -216,41 +278,48 @@ const NewInvoice = () => {
 
       currency: currency,
 
+      signatureAuthorityId: Number(selectedSignatureAuthority),
+
       grandtotal: grandTotal,
 
       paymentstatus: "pending",
 
       updatedby: getStoredUserId(),
 
-      taxamount:  gstAmount,
-      tdsamount: tdsAmount,
+      taxtype: taxType,
+      
 
       // ✅ ITEMS WITH CUSTOM FIELDS
       items: items.map((item: any) => ({
-        description: item.description,
+  description: item.description,
 
-        quantity: item.quantity,
+  quantity: 1,
 
-        unitprice: item.rate,
+  unitprice: item.rate,
 
-        linetotal: item.amount,
+  linetotal: item.amount,
 
-        customFieldValues: selectedCustomFields.map((field) => ({
-  fieldId: field.fieldId,
-  label: field.label,
-  value: item[String(field.fieldId)] ?? "",
+  customFieldValues: Array.isArray(selectedCustomFields)
+    ? selectedCustomFields.map((field) => ({
+        fieldId: Number(field.fieldId),
+        value: String(field.value || ""),
+      }))
+    : [],
 })),
-      })),
 
       // ✅ HEADER LEVEL CUSTOM FIELDS
-      customValues: selectedCustomFields.map(
-        (field) => ({
-          fieldId: field.fieldId,
-          label: field.label,
-          value: field.value,
-        })
-      ),
+      customValues: Array.isArray(selectedCustomFields)
+  ? selectedCustomFields.map((field) => ({
+      fieldId: Number(field.fieldId),
+      value: field.value || "",
+    }))
+  : [],
     };
+    console.log("CUSTOM VALUES:", selectedCustomFields);
+console.log(
+  "TYPE:",
+  typeof selectedCustomFields
+);
     console.log(payload);
     try {
       const res = await api.post(
@@ -439,6 +508,30 @@ const NewInvoice = () => {
     fetchFields();
   }, []);
 
+  useEffect(() => {
+
+  const loadSignatureAuthorities = async () => {
+
+    try {
+
+      const data =
+        await getSignatureAuthorities();
+
+      setSignatureAuthorities(data);
+
+    } catch (err) {
+
+      console.error(
+        "Failed to load signature authorities",
+        err
+      );
+    }
+  };
+
+  loadSignatureAuthorities();
+
+}, []);
+
   /* -------------------------------------------------------------------------- */
   /*                                   RETURN                                   */
   /* -------------------------------------------------------------------------- */
@@ -493,7 +586,7 @@ const NewInvoice = () => {
                 selectedClientId
               }
               onClientChange={
-                setSelectedClientId
+                handleClientChange
               }
               banks={banks}
               selectedBankId={
@@ -521,12 +614,10 @@ const NewInvoice = () => {
               onInvoiceTypeChange={
                 setInvoiceType
               }
-             taxRate={taxRate}
-  onTaxRateChange={setTaxRate}
-  
+             taxType={taxType}
+onTaxTypeChange={setTaxType}
 
-   tdsRate={tdsRate}
-  onTdsRateChange={setTdsRate}
+
 />
             
           
@@ -549,6 +640,41 @@ const NewInvoice = () => {
                   setCurrency
                 }
               />
+
+              {/* SIGNATURE AUTHORITY */}
+  <div className="flex flex-col gap-2">
+
+    <label className="text-sm font-semibold text-slate-700">
+      Signature Authority
+    </label>
+
+    <select
+      value={selectedSignatureAuthority}
+      onChange={(e) =>
+        setSelectedSignatureAuthority(
+          e.target.value
+        )
+      }
+      className="border border-slate-300 rounded-xl px-4 py-3 bg-white text-sm"
+    >
+
+      <option value="">
+        Select Authority
+      </option>
+
+      {signatureAuthorities.map((authority) => (
+
+        <option
+          key={authority.id}
+          value={authority.id}
+        >
+          {authority.name}
+        </option>
+
+      ))}
+
+    </select>
+  </div>
             </div>
 
             {/* ITEMS TABLE */}
@@ -565,12 +691,13 @@ const NewInvoice = () => {
         <div className="space-y-6">
           <InvoiceSummary
             subtotal={subtotal}
-            taxRate={taxRate}
-            tdsRate={tdsRate}
-            isInterState={
-              isInterState
-            }
+            taxType={taxType}
+            cgstAmount={cgstAmount}
+            sgstAmount={sgstAmount}
+            igstAmount={igstAmount}
             currency={currency}
+            adjustment={adjustment}
+            onAdjustmentChange={setAdjustment}
           />
         </div>
       </div>
