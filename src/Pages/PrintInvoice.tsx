@@ -53,6 +53,7 @@ interface InvoiceResponse {
   invoicedate: string;
   grandtotal: number;
   paymentstatus: string;
+  taxtype: string;
   client: ClientInfo;
   items: InvoiceItem[];
   customValues?: CustomFieldValue[];
@@ -72,8 +73,15 @@ interface InvoiceResponse {
     swiftCode: string;
     bankAddress: string;
   };
-
   qrCodeUrl?: string;
+  
+  signatureAuthorityId?: number;
+signatureAuthorityName?: string;
+signatureAuthorityRole?: string;
+signatureContactNumber?: string;
+signatureEmail?: string;
+
+  
 
 }
 
@@ -97,14 +105,20 @@ function numberToWords(num: number): string {
   return numberToWords(Math.floor(num/100000)) + " Lakh" + (num%100000 ? " " + numberToWords(num%100000) : "");
 }
 
-const fmt = (n: number, currency: string = "INR") =>
-  `${currency} ${Number(n).toLocaleString("en-CH", { minimumFractionDigits: 0 })}`;
-
-
+const fmt = (n: number) =>
+  Number(n).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  
 function formatDate(date: string) {
   if (!date) return "";
-  return date.split("T")[0];
+
+  return new Date(date)
+    .toLocaleDateString("en-GB")
+    .replace(/\//g, "-");
 }
+
 // ── Component ──
 export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
@@ -129,10 +143,13 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
       
         // ✅ handle both formats safely
         const raw = res.data.data || res.data;
+        console.log("RAW RESPONSE:", raw);
         
       
 const data = {
   ...raw,
+
+  taxtype: raw.taxtype || raw.taxType || "",
 
   items: (raw.items || []).map((item: any) => ({
     itemid: item.itemid ?? item.ItemID,
@@ -213,20 +230,20 @@ const data = {
     }
             * { margin:0; padding:0; box-sizing:border-box; }
             body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
-            .inv-header { display:flex; border-bottom: 2px solid #1a5276; }
+            .inv-header { display:flex; border-bottom: 2px solid #4A90D9; }
             .inv-company { flex:1; padding:12px 14px; }
-            .inv-company h2 { color:#1a5276; font-size:14px; font-weight:bold; margin-bottom:4px; }
+            .inv-company h2 { color:#4A90D9; font-size:14px; font-weight:bold; margin-bottom:4px; }
             .inv-company p { font-size:11px; line-height:1.5; }
             .inv-logo-box { width:160px; display:flex; align-items:center; justify-content:center; padding:10px; }
-            .inv-title-bar { background:#1a5276; color:white; text-align:center; padding:6px; font-size:13px; font-weight:bold; letter-spacing:1px; }
+            .inv-title-bar { background:#4A90D9; color:white; text-align:center; padding:6px; font-size:13px; font-weight:bold; letter-spacing:1px; }
             .inv-dates { display:flex; border-bottom:1px solid #ccc; }
             .inv-date-cell { flex:1; padding:7px 14px; border-right:1px solid #ccc; }
             .inv-date-cell:last-child { border-right:none; }
-            .inv-date-cell b { color:#1a5276; }
-            .inv-section-bar { background:#1a5276; color:white; padding:5px 14px; font-size:12px; font-weight:bold; }
+            .inv-date-cell b { color:#4A90D9; }
+            .inv-section-bar { background:#4A90D9; color:white; padding:5px 14px; font-size:12px; font-weight:bold; }
             .inv-bill-to { padding:10px 14px; min-height:52px; line-height:1.6; }
             table { width:100%; border-collapse:collapse; }
-            thead tr { background:#1a5276; color:white; }
+            thead tr { background:#4A90D9; color:white; }
            <th style={{ padding: "7px 10px", textAlign: "right" }}></th>
             thead th:first-child { width:36px; text-align:center; }
             thead th:last-child { text-align:right; }
@@ -235,20 +252,20 @@ const data = {
             tbody td:first-child { text-align:center; color:#555; }
             tbody td:last-child { text-align:right; }
             .total-row { display:flex; justify-content:flex-end; border-bottom:1px solid #ccc; }
-            .total-label { padding:5px 14px; font-weight:bold; color:#1a5276; border-left:1px solid #ccc; min-width:90px; text-align:right; }
+            .total-label { padding:5px 14px; font-weight:bold; color:#4A90D9; border-left:1px solid #ccc; min-width:90px; text-align:right; }
             .total-value { padding:5px 14px; min-width:110px; text-align:right; border-left:1px solid #ccc; }
             .words-bar { padding:7px 14px; border-top:1px solid #ccc; border-bottom:1px solid #ccc; }
-            .words-bar b { color:#1a5276; }
+            .words-bar b { color:#4A90D9; }
             .payment-section { display:flex; }
             .payment-left { flex:1; padding:10px 14px; }
-            .payment-left .pay-header { background:#1a5276; color:white; margin:-10px -14px 8px; padding:6px 14px; font-weight:bold; font-size:12px; }
+            .payment-left .pay-header { background:#4A90D9; color:white; margin:-10px -14px 8px; padding:6px 14px; font-weight:bold; font-size:12px; }
             .pay-row { display:flex; margin-bottom:2px; font-size:11px; }
             .pay-label { min-width:110px; color:#555; }
             .pay-val { font-weight:bold; }
             .payment-right { width:175px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; border-left:1px solid #ccc; gap:8px; }
-            .qr-label { font-size:10px; text-align:center; color:#1a5276; font-weight:bold; line-height:1.3; }
-            .scan-pay { font-size:10px; color:#c0392b; font-weight:bold; }
-            .inv-footer { padding:8px 14px; border-top:2px solid #1a5276; font-weight:bold; }
+            .qr-label { font-size:10px; text-align:center; color:#4A90D9; font-weight:bold; line-height:1.3; }
+            .scan-pay { font-size:10px; color:#E6B800; font-weight:bold; }
+            .inv-footer { padding:8px 14px; border-top:2px solid #4A90D9; font-weight:bold; }
             @page { margin: 10mm; }
             @media print {
   body {
@@ -259,7 +276,7 @@ const data = {
   .inv-title-bar,
   .inv-section-bar,
   thead tr {
-    background: #1a5276 !important;
+    background: #4A90D9 !important;
     color: white !important;
   }
 }
@@ -277,22 +294,45 @@ const data = {
   if (error)   return <div style={{ padding: 20, color: "red" }}>Error: {error}</div>;
   if (!invoice) return <div style={{ padding: 20 }}>Invoice not found</div>;
 
-  const totalWords = numberToWords(Math.floor(invoice.grandtotal)) +" "+ (invoice.currency) + "Only";
+  const totalWords =
+  numberToWords(Math.floor(invoice.grandtotal)) + " Only";
   const bank = invoice.bankDetails;
+
   const subtotal = invoice.items.reduce(
-  (sum: number, item: any) =>
-    sum + Number(item.linetotal || 0),
-  0
-);
-const taxPercentage =
-  subtotal > 0
-    ? (invoice.taxamount / subtotal) * 100
-    : 0;
-const tdsPercentage =
-  subtotal > 0
-    ? (invoice.tdsamount / subtotal) * 100
-    : 0;
+    (sum: number, item: any) => sum + Number(item.linetotal || 0),
+    0
+  );
+
+  let taxPercentage = 0;
+  let calculatedTax = 0;
+  let adjustment = 0;
+
+  // 1. First try calculating from the saved tax amount
+  if (invoice.taxamount > 0) {
+    taxPercentage = Math.round((invoice.taxamount / subtotal) * 100);
+    calculatedTax = invoice.taxamount;
+  } 
+  // 2. Next, check if the string tells us (e.g., "IGST @ 18%")
+  else if (invoice.taxtype?.includes("18") || invoice.taxtype?.includes("9")) {
+    taxPercentage = 18;
+    calculatedTax = (subtotal * taxPercentage) / 100;
+  } 
+  // 3. Reverse-engineer it if older invoice is missing tax fields
+  else if (!invoice.client.isexport) {
+    // If grand total is exactly Subtotal + 18%, assume it's 18%
+    const expected18PercentTax = (subtotal * 18) / 100;
     
+    // Using a tiny margin of error (0.1) for floating-point math weirdness
+    if (Math.abs(invoice.grandtotal - (subtotal + expected18PercentTax)) < 0.1) {
+        taxPercentage = 18;
+        calculatedTax = expected18PercentTax;
+    }
+  }
+
+  // 4. Calculate actual adjustment based on what's left over
+  adjustment = invoice.grandtotal - (subtotal + calculatedTax);
+
+  
   return (
     <div>
       {/* Print Button */}
@@ -300,7 +340,7 @@ const tdsPercentage =
   <button
     onClick={handlePrint}
     style={{
-      background: "#1a5276",
+      background: "#4A90D9",
       color: "white",
       border: "none",
       padding: "10px 22px",
@@ -320,9 +360,9 @@ const tdsPercentage =
       <div ref={printRef} style={{ background:"white", border:"1px solid #aaa", fontFamily:"Arial, sans-serif"  }}>
 
         {/* Header */}
-        <div className="inv-header" style={{ display:"flex", borderBottom:"2px solid #1a5276" }}>
+        <div className="inv-header" style={{ display:"flex", borderBottom:"2px solid #4A90D9" }}>
           <div className="inv-company" style={{ flex:1, padding:"12px 14px" }}>
-            <h2 style={{ color:"#1a5276", fontSize:14, fontWeight:"bold", marginBottom:4 }}>
+            <h2 style={{ color:"#4A90D9", fontSize:14, fontWeight:"bold", marginBottom:4 }}>
               ZAdroit IT Solutions Private Limited
             </h2>
             <p style={{ fontSize:11, lineHeight:1.5 }}>
@@ -349,7 +389,7 @@ const tdsPercentage =
 
         {/* Title */}
         <div style={{
-  background:"#1a5276",
+  background:"#4A90D9",
   color:"white",
   textAlign:"center",
   padding:"6px",
@@ -367,18 +407,18 @@ const tdsPercentage =
         {/* Dates */}
         <div style={{ display:"flex", borderBottom:"1px solid #ccc" }}>
           <div style={{ flex:1, padding:"7px 14px", borderRight:"1px solid #ccc", fontSize:12 }}>
-            <b style={{ color:"#1a5276" }}>Invoice Date :</b>&nbsp;{formatDate(invoice.invoicedate)}
+            <b style={{ color:"#4A90D9" }}>Invoice Date :</b>&nbsp;{formatDate(invoice.invoicedate)}
           </div>
            <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#1a5276" }}>Due Date :</b>&nbsp;{formatDate(invoice.invoiceduedate)}
+            <b style={{ color:"#4A90D9" }}>Due Date :</b>&nbsp;{formatDate(invoice.invoiceduedate)}
           </div>
           <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#1a5276" }}>Invoice No :</b>&nbsp;{invoice.invoicenumber}
+            <b style={{ color:"#4A90D9" }}>Invoice No :</b>&nbsp;{invoice.invoicenumber}
           </div>
         </div>
 
         {/* Bill To */}
-        <div style={{ background:"#1a5276", color:"white", padding:"5px 14px", fontSize:12, fontWeight:"bold" }}>
+        <div style={{ background:"#4A90D9", color:"white", padding:"5px 14px", fontSize:12, fontWeight:"bold" }}>
           Bill To
         </div>
         <div style={{ padding:"10px 14px", minHeight:52, fontSize:12, lineHeight:1.6 }}>
@@ -407,7 +447,7 @@ const tdsPercentage =
         {/* Items Table */}
 <table style={{ width: "100%", borderCollapse: "collapse" }}>
   <thead>
-    <tr style={{ background: "#1a5276", color: "white" }}>
+    <tr style={{ background: "#4A90D9", color: "white" }}>
       <th style={{ padding: "7px 10px", textAlign: "center", width: 36 }}>#</th>
       <th style={{ padding: "7px 10px", textAlign: "left" }}>Item &amp; Description</th>
       
@@ -429,12 +469,12 @@ const tdsPercentage =
           {item.description}
           {item.quantity > 1 && (
             <span style={{ color: "#888", fontSize: 11 }}>
-              &nbsp;(Qty: {item.quantity} × {fmt(item.unitprice, invoice.currency)})
+              &nbsp;(Qty: {item.quantity} × {fmt(item.unitprice)})
             </span>
           )}
         </td>
 
-        {/* ✅ Dynamic Custom Cells */}
+        {/*  Dynamic Custom Cells */}
        {invoice.customValues?.map((field) => (
   <td key={field.fieldId} style={{ padding: "10px", fontSize: 12 }}>
     {item.itemCustomValues?.find(
@@ -444,7 +484,7 @@ const tdsPercentage =
         ))}
 
         <td style={{ padding: "10px", textAlign: "right", fontSize: 12 }}>
-          {(invoice.currency)} {(item.linetotal)}
+          {fmt(item.linetotal)}
         </td>
       </tr>
     ))}
@@ -453,53 +493,82 @@ const tdsPercentage =
         {/* Totals */}
         <div>
           {/* Sub Total */}
-          <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
-            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
+          <div style={{ display:"flex",borderBottom:"1px solid #ccc", justifyContent:"flex-end"}}>
+            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:12 }}>
               Sub Total
             </div>
             
             <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
              
-                {(invoice.currency)} {(subtotal)}
+                {fmt(subtotal)}
             </div>
           </div>
 
           {/* Tax row — only if not export and tax > 0 */}
-          {!invoice.client.isexport && (
-            <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
-              <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
-                GST/IGST ({taxPercentage}%)
+          {!invoice.client.isexport && taxPercentage > 0 && (
+            <div style={{ display:"flex", borderBottom:"1px solid #ccc" , justifyContent:"flex-end"}}>
+              <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:12 }}>
+                {invoice.taxtype || `GST/IGST (${taxPercentage}%)`}
               </div>
             
               <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-                {(invoice.currency)} {(invoice.taxamount)}
-              </div>
-               </div>
-          )}
-             <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
-              <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:12 }}>
-                Less TDS ({tdsPercentage}%)
-              </div>
-              <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-                {(invoice.currency)} {(invoice.tdsamount)}
+                {fmt(calculatedTax)}
               </div>
             </div>
+          )}
+          
+          {/* Adjustment - ONLY SHOW IF NOT ZERO */}
+          {Math.abs(adjustment) > 0.01 && (
+            <div
+              style={{
+                display: "flex",
+                borderBottom: "1px solid #ccc",
+                justifyContent: "flex-end",
+              }}
+            >
+              <div
+                style={{
+                  padding: "5px 14px",
+                  fontWeight: "bold",
+                  color: "#4A90D9",
+                  minWidth: 90,
+                  textAlign: "right",
+                  fontSize: 12,
+                }}
+              >
+                Adjustments
+              </div>
+
+              <div
+                style={{
+                  padding: "5px 14px",
+                  minWidth: 110,
+                  textAlign: "right",
+                  borderLeft: "1px solid #ccc",
+                  fontSize: 12,
+                }}
+              >
+                {adjustment < 0 ? `- ${fmt(Math.abs(adjustment))}` : fmt(adjustment)}
+              </div>
+            </div>
+          )}
           
 
+
           {/* Grand Total */}
-          <div style={{ display:"flex", justifyContent:"flex-end", borderBottom:"1px solid #ccc" }}>
-            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#1a5276", borderLeft:"1px solid #ccc", minWidth:90, textAlign:"right", fontSize:13 }}>
+          <div style={{ display:"flex", borderBottom:"1px solid #ccc", justifyContent:"flex-end"}}>
+            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:13 }}>
               Total
             </div>
             <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontWeight:"bold", fontSize:13 }}>
-              {(invoice.currency)} {(invoice.grandtotal)}
+              {invoice.currency} {fmt(invoice.grandtotal)}
             </div>
           </div>
         </div>
 
         {/* Total in Words */}
         <div style={{ padding:"7px 14px", borderTop:"1px solid #ccc", borderBottom:"1px solid #ccc", fontSize:12 }}>
-          <b style={{ color:"#1a5276" }}>Total In Words :</b> {totalWords}
+          <b style={{ color:"#4A90D9" }}>Total In Words :</b> {totalWords}
         </div>
         {/* Payment Details */}
         <div style={{ display:"flex" }}>
@@ -507,7 +576,7 @@ const tdsPercentage =
             {bank && (
   <>
     <div style={{
-      background:"#1a5276",
+      background:"#4A90D9",
       color:"white",
       margin:"-10px -14px 8px",
       padding:"6px 14px",
@@ -534,8 +603,8 @@ const tdsPercentage =
   </>
 )}
           </div>
-          <div style={{ width:175, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:10, borderLeft:"1px solid #ccc", gap:8 }}>
-            <div style={{ fontSize:10, textAlign:"center", color:"#1a5276", fontWeight:"bold", lineHeight:1.3 }}>
+          <div style={{ width:175, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:10, gap:8 }}>
+            <div style={{ fontSize:10, textAlign:"center", color:"#4A90D9", fontWeight:"bold", lineHeight:1.3 }}>
               M/S.ZADROIT IT SOLUTIONS PRIVATE LIMITED
             </div>
             {invoice.qrCodeUrl ? (
@@ -546,14 +615,57 @@ const tdsPercentage =
     alt="QR Code"
   />
 ) : null}
-            <div style={{ fontSize:10, color:"#c0392b", fontWeight:"bold" }}>Scan and Pay</div>
+            <div style={{ fontSize:10, color:"#E6B800", fontWeight:"bold" }}>Scan and Pay</div>
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{ padding:"8px 14px", borderTop:"2px solid #1a5276", fontWeight:"bold", fontSize:12 }}>
-          For ZADROIT IT SOLUTIONS PRIVATE LIMITED
-        </div>
+        {/* Signature Section */}
+<div
+  style={{
+    borderTop: "2px solid #4A90D9",
+    padding: "10px 14px",
+    minHeight: 140,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    fontSize: 12,
+    fontWeight: "bold"
+  }}
+>
+  <div>
+    For ZADROIT IT SOLUTIONS PRIVATE LIMITED
+  </div>
+
+  <div>
+    <div style={{ marginTop: 60 }}>
+
+  <div
+    style={{
+      fontWeight: "bold",
+      fontSize: 13,
+    }}
+  >
+    {invoice.signatureAuthorityName}
+  </div>
+
+  <div
+    style={{
+      fontSize: 12,
+      marginTop: 4,
+    }}
+  >
+    {invoice.signatureAuthorityRole}
+  </div>
+
+</div>
+
+    <div style={{ marginTop: 6 }}>
+      AUTHORISED SIGNATORY
+    </div>
+  </div>
+</div>
+        
 
       </div>
     </div>

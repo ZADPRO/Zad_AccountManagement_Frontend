@@ -1,5 +1,5 @@
 import  { useState, useEffect } from 'react';
-import { X, UserCheck, Loader2, AlertCircle, Shield, Calendar } from 'lucide-react';
+import { X, UserCheck, Loader2, AlertCircle, Shield } from 'lucide-react';
 import api from '@/api/api';
 interface ViewUserProps {
   isOpen: boolean;
