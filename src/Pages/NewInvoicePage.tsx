@@ -290,20 +290,19 @@ const NewInvoice = () => {
       
 
       // ✅ ITEMS WITH CUSTOM FIELDS
-      items: items.map((item: any) => ({
+      
+items: items.map((item: any) => ({
   description: item.description,
-
   quantity: 1,
-
   unitprice: item.rate,
-
   linetotal: item.amount,
-
-  customFieldValues: Array.isArray(selectedCustomFields)
-    ? selectedCustomFields.map((field) => ({
-        fieldId: Number(field.fieldId),
-        value: String(field.value || ""),
-      }))
+  customFieldValues: Array.isArray(customFieldDefs)
+    ? customFieldDefs
+        .filter((def) => item[def.fieldId] !== undefined && item[def.fieldId] !== "")
+        .map((def) => ({
+          fieldId: Number(def.fieldId),
+          value: String(item[def.fieldId]),
+        }))
     : [],
 })),
 

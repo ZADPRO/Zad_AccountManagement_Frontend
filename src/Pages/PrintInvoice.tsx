@@ -129,68 +129,65 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
   useEffect(() => {
     if (!invoiceId) return;
     
-    const fetchInvoice = async () => {
+    const fetchInvoiceData = async () => {
       try {
         setLoading(true);
-
         const token = sessionStorage.getItem("token");
 
-       const res = await api.get(`/invoices/${invoiceId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        // 1. Fetch BOTH the invoice AND the custom field names at the same time!
+        const [invRes, fieldsRes] = await Promise.all([
+          api.get(`/invoices/${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
+          api.get(`/custom-fields`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+      
+        const raw = invRes.data.data || invRes.data;
+        const customFieldsList = fieldsRes.data?.fields || [];
+
+        // 2. Create a lookup dictionary for the real labels (e.g., { 1: "SAC", 2: "Qty in Hrs" })
+        const fieldLabels: Record<number, string> = {};
+        customFieldsList.forEach((f: any) => {
+          fieldLabels[f.fieldId] = f.fieldLabel;
         });
-      
-        // ✅ handle both formats safely
-        const raw = res.data.data || res.data;
-        console.log("RAW RESPONSE:", raw);
         
-      
-const data = {
-  ...raw,
+        const data = {
+          ...raw,
+          taxtype: raw.taxtype || raw.taxType || "",
 
-  taxtype: raw.taxtype || raw.taxType || "",
+          items: (raw.items || []).map((item: any) => ({
+            itemid: item.itemid ?? item.ItemID,
+            description: item.description ?? item.Description,
+            quantity: item.quantity ?? item.Quantity,
+            unitprice: item.unitprice ?? item.UnitPrice,
+            linetotal: item.linetotal ?? item.LineTotal, 
 
-  items: (raw.items || []).map((item: any) => ({
-    itemid: item.itemid ?? item.ItemID,
-    description: item.description ?? item.Description,
-    quantity: item.quantity ?? item.Quantity,
-    unitprice: item.unitprice ?? item.UnitPrice,
-    linetotal: item.linetotal ?? item.LineTotal, 
+            itemCustomValues: (item.customFieldValues || item.custom_field_values || []).map((f: any) => ({
+              fieldId: Number(f.fieldId),
+              // ✅ Look up the real label using the ID!
+              label: fieldLabels[Number(f.fieldId)] || f.label || f.fieldLabel || "Custom Field",
+              value: f.value,
+            })),
+          })),
+          
+          // ✅ Invoice-level custom fields mapped with real labels!
+          customValues: (raw.customValues || raw.CustomValues || []).map((f: any) => ({
+            fieldId: Number(f.fieldId),
+            label: fieldLabels[Number(f.fieldId)] || f.fieldLabel || f.label || "Custom Field", 
+            value: f.value,
+          })),
+          
+          bankDetails: raw.bankDetails || {
+            beneficiary: raw.invoiceBeneficiary,
+            bankName: raw.invoiceBankName,
+            accountNumber: raw.invoiceAccountNumber,
+            ifsc: raw.invoiceIfscCode,
+            accountType: raw.invoiceAccountType,
+            swiftCode: raw.invoiceSwiftCode,
+            bankAddress: raw.invoiceBankAddress,
+          },
+          qrCodeUrl: raw.qrCodeUrl || raw.invoiceQrCodeUrl || null,
+        };
 
-    itemCustomValues: (item.customFieldValues || item.custom_field_values || []).map((f: any) => ({
-    fieldId: Number(f.fieldId),
-    label: f.label,
-    value: f.value,
-  })),
-  })),
-        
-
-  // ✅ Custom Fields
-      customValues: (raw.customValues || raw.CustomValues || []).map((f: any) => ({
-    fieldId: Number(f.fieldId),
-    label: f.label,
-    value: f.value,
-  })),
-  
-  // ✅ NEW MAPPINGS
-  bankDetails: raw.bankDetails || {
-    beneficiary: raw.invoiceBeneficiary,
-    bankName: raw.invoiceBankName,
-    accountNumber: raw.invoiceAccountNumber,
-    ifsc: raw.invoiceIfscCode,
-    accountType: raw.invoiceAccountType,
-    swiftCode: raw.invoiceSwiftCode,
-    bankAddress: raw.invoiceBankAddress,
-  },
-
-  qrCodeUrl: raw.qrCodeUrl || raw.invoiceQrCodeUrl || null,
-};
-
-
-      setInvoice(data); 
-      
-       
+        setInvoice(data); 
       } catch (err: any) {
         console.error(err);
         setError(err?.response?.data?.message || "Failed to fetch invoice");
@@ -199,7 +196,7 @@ const data = {
       }
     };
 
-    fetchInvoice();
+    fetchInvoiceData();
   }, [invoiceId]);
 
 
@@ -332,32 +329,38 @@ const data = {
   // 4. Calculate actual adjustment based on what's left over
   adjustment = invoice.grandtotal - (subtotal + calculatedTax);
 
+  const showTax = !invoice.client.isexport && taxPercentage > 0;
+  const showAdjustment = Math.abs(adjustment) > 0.01;
+  const totalRowCount = 2 + (showTax ? 1 : 0) + (showAdjustment ? 1 : 0);
   
+  // ✅ Change this to 2 to account for the new split column!
+  const leftColSpan = 2 + (invoice.customValues?.length || 0);
+
   return (
     <div>
       {/* Print Button */}
       <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-  <button
-    onClick={handlePrint}
-    style={{
-      background: "#4A90D9",
-      color: "white",
-      border: "none",
-      padding: "10px 22px",
-      borderRadius: 6,
-      cursor: "pointer",
-      fontSize: 15,
-      display: "flex",
-      alignItems: "center",
-      gap: 8
-    }}
-  >
-    🖨️ Print Invoice
-  </button>
-</div>
+        <button
+          onClick={handlePrint}
+          style={{
+            background: "#4A90D9",
+            color: "white",
+            border: "none",
+            padding: "10px 22px",
+            borderRadius: 6,
+            cursor: "pointer",
+            fontSize: 15,
+            display: "flex",
+            alignItems: "center",
+            gap: 8
+          }}
+        >
+          🖨️ Print Invoice
+        </button>
+      </div>
 
       {/* Invoice */}
-      <div ref={printRef} style={{ background:"white", border:"1px solid #aaa", fontFamily:"Arial, sans-serif"  }}>
+      <div ref={printRef} style={{ background:"white", border:"1px solid #aaa", fontFamily:"Arial, sans-serif" }}>
 
         {/* Header */}
         <div className="inv-header" style={{ display:"flex", borderBottom:"2px solid #4A90D9" }}>
@@ -375,35 +378,18 @@ const data = {
             </p>
           </div>
           <div style={{ width: 160, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 }}>
-  <img 
-    src="/LOGO.PNG" 
-    style={{ 
-      width: "100%",      // Tells the image to fill the 160px container
-      height: "auto",     // Maintains aspect ratio
-      maxWidth: "140px",  // Ensures it stays within a specific size regardless of print scaling
-      objectFit: "contain" 
-    }} 
-  />
-</div>
+            <img 
+              src="/LOGO.PNG" 
+              style={{ width: "100%", height: "auto", maxWidth: "140px", objectFit: "contain" }} 
+            />
+          </div>
         </div>
 
         {/* Title */}
-        <div style={{
-  background:"#4A90D9",
-  color:"white",
-  textAlign:"center",
-  padding:"6px",
-  fontSize:13,
-  fontWeight:"bold",
-  letterSpacing:1
-}}>
-  {invoice.invoiceType === "proforma"
-    ? "Proforma Invoice"
-    : invoice.invoiceType === "quote"
-    ? "Quotation"
-    : "Tax Invoice"}
-</div>
-       
+        <div style={{ background:"#4A90D9", color:"white", textAlign:"center", padding:"6px", fontSize:13, fontWeight:"bold", letterSpacing:1 }}>
+          {invoice.invoiceType === "proforma" ? "Proforma Invoice" : invoice.invoiceType === "quote" ? "Quotation" : "Tax Invoice"}
+        </div>
+        
         {/* Dates */}
         <div style={{ display:"flex", borderBottom:"1px solid #ccc" }}>
           <div style={{ flex:1, padding:"7px 14px", borderRight:"1px solid #ccc", fontSize:12 }}>
@@ -422,250 +408,171 @@ const data = {
           Bill To
         </div>
         <div style={{ padding:"10px 14px", minHeight:52, fontSize:12, lineHeight:1.6 }}>
-          <strong>{invoice.client.name}</strong>&nbsp;
-          ({invoice.client.businessName})<br/>
+          <strong>{invoice.client.name}</strong>&nbsp;({invoice.client.businessName})<br/>
           {invoice.client.billingAddress}<br/>
-         {[
-  invoice.client.billingState,
-  invoice.client.billingCountry
-]
-  .filter(Boolean)
-  .join(", ")}<br/>
+          {[invoice.client.billingState, invoice.client.billingCountry].filter(Boolean).join(", ")}<br/>
           {[
-  invoice.client.gstnumber
-    ? `GSTIN: ${invoice.client.gstnumber}`
-    : null,
-
-  invoice.client.pan
-    ? `PAN: ${invoice.client.pan}`
-    : null,
-]
-  .filter(Boolean)
-  .join(" · ")}
+            invoice.client.gstnumber ? `GSTIN: ${invoice.client.gstnumber}` : null,
+            invoice.client.pan ? `PAN: ${invoice.client.pan}` : null,
+          ].filter(Boolean).join(" · ")}
         </div>
 
-        {/* Items Table */}
-<table style={{ width: "100%", borderCollapse: "collapse" }}>
-  <thead>
-    <tr style={{ background: "#4A90D9", color: "white" }}>
-      <th style={{ padding: "7px 10px", textAlign: "center", width: 36 }}>#</th>
-      <th style={{ padding: "7px 10px", textAlign: "left" }}>Item &amp; Description</th>
-      
-      {/* ✅ Dynamic Custom Columns */}
-      {invoice.customValues?.map((field) => (
-        <th key={field.fieldId} style={{ padding: "7px 10px", textAlign: "left" }}>
-          {field.label}
-        </th>
-      ))}
+        {/* Items Table & Totals Grid */}
+        <table style={{ width: "100%", borderCollapse: "collapse", borderTop: "1px solid #4A90D9", borderBottom: "1px solid black" }}>
+          <thead>
+            <tr style={{ background: "#4A90D9", color: "white" }}>
+              <th style={{ padding: "7px 10px", textAlign: "center", width: 36, border: "1px solid black" }}>#</th>
+              
+              {/* colSpan={2} secretly splits this column so the footer can align properly */}
+              <th colSpan={2} style={{ padding: "7px 10px", textAlign: "left", border: "1px solid black" }}>Item &amp; Description</th>
+              
+              {/* Dynamic Custom Columns */}
+              {invoice.customValues?.map((field) => (
+                <th key={field.fieldId} style={{ padding: "7px 10px", textAlign: "left", border: "1px solid black" }}>
+                  {field.label}
+                </th>
+              ))}
 
-      <th style={{ padding: "7px 10px", textAlign: "right" }}>Amount {(invoice.currency)}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {invoice.items.map((item: any, i) => (
-      <tr key={item.itemid} style={{ borderBottom: "1px solid #ddd" }}>
-        <td style={{ padding: "10px", textAlign: "center", color: "#555" }}>{i + 1}</td>
-        <td style={{ padding: "10px", fontSize: 12 }}>
-          {item.description}
-          {item.quantity > 1 && (
-            <span style={{ color: "#888", fontSize: 11 }}>
-              &nbsp;(Qty: {item.quantity} × {fmt(item.unitprice)})
-            </span>
-          )}
-        </td>
+              {/* ✨ Added width: 130px here to anchor the right side of the table */}
+              <th style={{ width: "130px", padding: "7px 10px", textAlign: "right", border: "1px solid black" }}>Amount ({invoice.currency})</th>
+            </tr>
+          </thead>
+          
+          <tbody>
+            {invoice.items.map((item: any, i) => (
+              <tr key={item.itemid} style={{ borderBottom: "1px solid black" }}>
+                <td style={{ padding: "10px", textAlign: "center", color: "#555", border: "1px solid black" }}>{i + 1}</td>
+                
+                {/* colSpan={2} here matches the header split */}
+                <td colSpan={2} style={{ padding: "10px", fontSize: 12, border: "1px solid black" }}>
+                  {item.description}
+                  {item.quantity > 1 && (
+                    <span style={{ color: "#888", fontSize: 11 }}>
+                      <br/>(Qty: {item.quantity} × {fmt(item.unitprice)})
+                    </span>
+                  )}
+                </td>
 
-        {/*  Dynamic Custom Cells */}
-       {invoice.customValues?.map((field) => (
-  <td key={field.fieldId} style={{ padding: "10px", fontSize: 12 }}>
-    {item.itemCustomValues?.find(
-      (cf: ItemCustomFieldValue) => cf.fieldId === field.fieldId
-    )?.value || "-"}
-  </td>
-        ))}
+                {/* Dynamic Custom Cells */}
+                {invoice.customValues?.map((field) => (
+                  <td key={field.fieldId} style={{ padding: "10px", fontSize: 12, border: "1px solid black" }}>
+                    {item.itemCustomValues?.find(
+                      (cf: ItemCustomFieldValue) => cf.fieldId === field.fieldId
+                    )?.value || "-"}
+                  </td>
+                ))}
 
-        <td style={{ padding: "10px", textAlign: "right", fontSize: 12 }}>
-          {fmt(item.linetotal)}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-        {/* Totals */}
-        <div>
-          {/* Sub Total */}
-          <div style={{ display:"flex",borderBottom:"1px solid #ccc", justifyContent:"flex-end"}}>
-            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:12 }}>
-              Sub Total
-            </div>
-            
-            <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-             
+                <td style={{ padding: "10px", textAlign: "right", fontSize: 12, border: "1px solid black" }}>
+                  {fmt(item.linetotal)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+
+          {/* Totals Section Attached to Table Grid */}
+          <tfoot>
+            {/* Sub Total */}
+            <tr>
+              {/* The empty box dynamically stretches across the # and left half of the description */}
+              <td rowSpan={totalRowCount} colSpan={leftColSpan} style={{ border: "1px solid black", backgroundColor: "white" }}></td>
+              
+              {/* ✨ Added width: 130px here to stop the browser from collapsing the invisible column! */}
+              <td style={{ width: "130px", padding: "5px 14px", fontWeight: "bold", textAlign: "right", fontSize: 12, border: "1px solid black", color: "#4A90D9" }}>
+                Sub Total
+              </td>
+              <td style={{ padding: "5px 14px", textAlign: "right", fontSize: 12, border: "1px solid black" }}>
                 {fmt(subtotal)}
-            </div>
-          </div>
+              </td>
+            </tr>
 
-          {/* Tax row — only if not export and tax > 0 */}
-          {!invoice.client.isexport && taxPercentage > 0 && (
-            <div style={{ display:"flex", borderBottom:"1px solid #ccc" , justifyContent:"flex-end"}}>
-              <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:12 }}>
-                {invoice.taxtype || `GST/IGST (${taxPercentage}%)`}
-              </div>
-            
-              <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontSize:12 }}>
-                {fmt(calculatedTax)}
-              </div>
-            </div>
-          )}
-          
-          {/* Adjustment - ONLY SHOW IF NOT ZERO */}
-          {Math.abs(adjustment) > 0.01 && (
-            <div
-              style={{
-                display: "flex",
-                borderBottom: "1px solid #ccc",
-                justifyContent: "flex-end",
-              }}
-            >
-              <div
-                style={{
-                  padding: "5px 14px",
-                  fontWeight: "bold",
-                  color: "#4A90D9",
-                  minWidth: 90,
-                  textAlign: "right",
-                  fontSize: 12,
-                }}
-              >
-                Adjustments
-              </div>
+            {/* Tax */}
+            {showTax && (
+              <tr>
+                <td style={{ padding: "5px 14px", fontWeight: "bold", textAlign: "right", fontSize: 12, border: "1px solid black", color: "#4A90D9" }}>
+                  {invoice.taxtype || `GST/IGST (${taxPercentage}%)`}
+                </td>
+                <td style={{ padding: "5px 14px", textAlign: "right", fontSize: 12, border: "1px solid black" }}>
+                  {fmt(calculatedTax)}
+                </td>
+              </tr>
+            )}
 
-              <div
-                style={{
-                  padding: "5px 14px",
-                  minWidth: 110,
-                  textAlign: "right",
-                  borderLeft: "1px solid #ccc",
-                  fontSize: 12,
-                }}
-              >
-                {adjustment < 0 ? `- ${fmt(Math.abs(adjustment))}` : fmt(adjustment)}
-              </div>
-            </div>
-          )}
-          
+            {/* Adjustments */}
+            {showAdjustment && (
+              <tr>
+                <td style={{ padding: "5px 14px", fontWeight: "bold", textAlign: "right", fontSize: 12, border: "1px solid black", color: "#4A90D9" }}>
+                  Adjustments
+                </td>
+                <td style={{ padding: "5px 14px", textAlign: "right", fontSize: 12, border: "1px solid black" }}>
+                  {adjustment < 0 ? `- ${fmt(Math.abs(adjustment))}` : fmt(adjustment)}
+                </td>
+              </tr>
+            )}
 
-
-          {/* Grand Total */}
-          <div style={{ display:"flex", borderBottom:"1px solid #ccc", justifyContent:"flex-end"}}>
-            <div style={{ padding:"5px 14px", fontWeight:"bold", color:"#4A90D9", minWidth:90, textAlign:"right", fontSize:13 }}>
-              Total
-            </div>
-            <div style={{ padding:"5px 14px", minWidth:110, textAlign:"right", borderLeft:"1px solid #ccc", fontWeight:"bold", fontSize:13 }}>
-              {invoice.currency} {fmt(invoice.grandtotal)}
-            </div>
-          </div>
-        </div>
+            {/* Grand Total */}
+            <tr>
+              <td style={{ padding: "5px 14px", fontWeight: "bold", textAlign: "right", fontSize: 13, border: "1px solid black", color: "#4A90D9" }}>
+                Total
+              </td>
+              <td style={{ padding: "5px 14px", textAlign: "right", fontWeight: "bold", fontSize: 13, border: "1px solid black" }}>
+                {invoice.currency} {fmt(invoice.grandtotal)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
 
         {/* Total in Words */}
         <div style={{ padding:"7px 14px", borderTop:"1px solid #ccc", borderBottom:"1px solid #ccc", fontSize:12 }}>
           <b style={{ color:"#4A90D9" }}>Total In Words :</b> {totalWords}
         </div>
+
         {/* Payment Details */}
         <div style={{ display:"flex" }}>
           <div style={{ flex:1, padding:"10px 14px" }}>
             {bank && (
-  <>
-    <div style={{
-      background:"#4A90D9",
-      color:"white",
-      margin:"-10px -14px 8px",
-      padding:"6px 14px",
-      fontWeight:"bold",
-      fontSize:12
-    }}>
-      Payments to be made to :
-    </div>
-
-    {[
-      ["Beneficiary", 'ZADROIT IT SOLUTIONS PRIVATE LIMITED'],
-      ["Bank", bank.bankName],
-      ["Account No", bank.accountNumber],
-      ["IFSC Code", bank.ifsc],
-      ["Account Type", bank.accountType],
-      ["Swift Code", bank.swiftCode],
-      ["Bank Address", bank.bankAddress],
-    ].map(([label, val]) => (
-      <div key={label} style={{ display:"flex", marginBottom:2, fontSize:11 }}>
-        <div style={{ minWidth:110, color:"#555" }}>{label}</div>
-        <div style={{ fontWeight:"bold" }}>{val}</div>
-      </div>
-    ))}
-  </>
-)}
+              <>
+                <div style={{ background:"#4A90D9", color:"white", margin:"-10px -14px 8px", padding:"6px 14px", fontWeight:"bold", fontSize:12 }}>
+                  Payments to be made to :
+                </div>
+                {[
+                  ["Beneficiary", 'ZADROIT IT SOLUTIONS PRIVATE LIMITED'],
+                  ["Bank", bank.bankName],
+                  ["Account No", bank.accountNumber],
+                  ["IFSC Code", bank.ifsc],
+                  ["Account Type", bank.accountType],
+                  ["Swift Code", bank.swiftCode],
+                  ["Bank Address", bank.bankAddress],
+                ].map(([label, val]) => (
+                  <div key={label} style={{ display:"flex", marginBottom:2, fontSize:11 }}>
+                    <div style={{ minWidth:110, color:"#555" }}>{label}</div>
+                    <div style={{ fontWeight:"bold" }}>{val}</div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
           <div style={{ width:175, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:10, gap:8 }}>
             <div style={{ fontSize:10, textAlign:"center", color:"#4A90D9", fontWeight:"bold", lineHeight:1.3 }}>
               M/S.ZADROIT IT SOLUTIONS PRIVATE LIMITED
             </div>
             {invoice.qrCodeUrl ? (
-  <img
-    src={invoice.qrCodeUrl}
-    width={90}
-    height={90}
-    alt="QR Code"
-  />
-) : null}
+              <img src={invoice.qrCodeUrl} width={90} height={90} alt="QR Code" />
+            ) : null}
             <div style={{ fontSize:10, color:"#E6B800", fontWeight:"bold" }}>Scan and Pay</div>
           </div>
         </div>
 
-        {/* Footer */}
         {/* Signature Section */}
-<div
-  style={{
-    borderTop: "2px solid #4A90D9",
-    padding: "10px 14px",
-    minHeight: 140,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    fontSize: 12,
-    fontWeight: "bold"
-  }}
->
-  <div>
-    For ZADROIT IT SOLUTIONS PRIVATE LIMITED
-  </div>
-
-  <div>
-    <div style={{ marginTop: 60 }}>
-
-  <div
-    style={{
-      fontWeight: "bold",
-      fontSize: 13,
-    }}
-  >
-    {invoice.signatureAuthorityName}
-  </div>
-
-  <div
-    style={{
-      fontSize: 12,
-      marginTop: 4,
-    }}
-  >
-    {invoice.signatureAuthorityRole}
-  </div>
-
-</div>
-
-    <div style={{ marginTop: 6 }}>
-      AUTHORISED SIGNATORY
-    </div>
-  </div>
-</div>
-        
+        <div style={{ borderTop: "2px solid #4A90D9", padding: "10px 14px", minHeight: 140, display: "flex", flexDirection: "column", justifyContent: "space-between", fontSize: 12, fontWeight: "bold" }}>
+          <div>For ZADROIT IT SOLUTIONS PRIVATE LIMITED</div>
+          <div>
+            <div style={{ marginTop: 60 }}>
+              <div style={{ fontWeight: "bold", fontSize: 13 }}>{invoice.signatureAuthorityName}</div>
+              <div style={{ fontSize: 12, marginTop: 4 }}>{invoice.signatureAuthorityRole}</div>
+            </div>
+            <div style={{ marginTop: 6 }}>AUTHORISED SIGNATORY</div>
+          </div>
+        </div>
 
       </div>
     </div>

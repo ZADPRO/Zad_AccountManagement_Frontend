@@ -135,7 +135,9 @@ const BankDetailsSidebar: React.FC<Props> = ({
   };
 
   const handleSave = async () => {
+
     // ---------------- VALIDATIONS ----------------
+    
     if (!formData.bankName.trim()) {
       toast.current?.show({
         severity: "warn",
