@@ -144,7 +144,7 @@ const UserManagement = () => {
           <InputText
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="  Search users..."
+            placeholder="      Search users..."
             className="w-full h-full pl-12 rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 transition-all"
           />
         </div>

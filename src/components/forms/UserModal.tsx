@@ -171,13 +171,9 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
                 <FieldLabel label="Username" fieldName="username" required />
                 <input 
                   type="text" 
-                  disabled={isViewOnly} 
-                  className={`${inputClass} ${errors.username ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
-                  value={formData.username} 
-                  onChange={e => {
-                    setFormData({...formData, username: e.target.value});
-                    if(errors.username) setErrors(prev => ({...prev, username: ''}));
-                  }} 
+                  readOnly
+                  className={`${inputClass} bg-slate-50 cursor-not-allowed ${errors.username ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
+                  value={formData.username}  
                 />
               </div>
               <div className="space-y-1.5">
