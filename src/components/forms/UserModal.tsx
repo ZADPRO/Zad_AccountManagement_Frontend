@@ -197,13 +197,9 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
               <FieldLabel label="Email Address" fieldName="email" required />
               <input 
                 type="email" 
-                disabled={isViewOnly} 
-                className={`${inputClass} ${errors.email ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
+                readOnly
+                className={`${inputClass} bg-slate-50 cursor-not-allowed ${errors.email ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
                 value={formData.email} 
-                onChange={e => {
-                  setFormData({...formData, email: e.target.value});
-                  if(errors.email) setErrors(prev => ({...prev, email: ''}));
-                }} 
               />
             </div>
 
