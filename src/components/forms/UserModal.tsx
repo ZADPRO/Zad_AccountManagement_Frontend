@@ -169,11 +169,15 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <FieldLabel label="Username" fieldName="username" required />
-                <input 
-                  type="text" 
-                  readOnly
-                  className={`${inputClass} bg-slate-50 cursor-not-allowed ${errors.username ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
-                  value={formData.username}  
+                <input
+                  type="text"
+                  readOnly={mode === 'edit'}
+                  className={`${inputClass} ${mode === 'edit' ? 'bg-slate-50 cursor-not-allowed' : ''} ${errors.username ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`}
+                  value={formData.username}
+                  onChange={e => {
+                    setFormData({...formData, username: e.target.value});
+                    if(errors.username) setErrors(prev => ({...prev, username: ''}));
+                  }}
                 />
               </div>
               <div className="space-y-1.5">
@@ -191,11 +195,15 @@ const UserModal = ({ isOpen, onClose, onSave, userId, mode }: UserModalProps) =>
 
             <div className="space-y-1.5">
               <FieldLabel label="Email Address" fieldName="email" required />
-              <input 
-                type="email" 
-                readOnly
-                className={`${inputClass} bg-slate-50 cursor-not-allowed ${errors.email ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`} 
-                value={formData.email} 
+              <input
+                type="email"
+                readOnly={mode === 'edit'}
+                className={`${inputClass} ${mode === 'edit' ? 'bg-slate-50 cursor-not-allowed' : ''} ${errors.email ? 'border-rose-500 ring-4 ring-rose-500/5' : ''}`}
+                value={formData.email}
+                onChange={e => {
+                  setFormData({...formData, email: e.target.value});
+                  if(errors.email) setErrors(prev => ({...prev, email: ''}));
+                }}
               />
             </div>
 
