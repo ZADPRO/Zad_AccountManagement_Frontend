@@ -4,6 +4,8 @@ import UserModal from '../components/forms/UserModal';
 import UserPreviewModal from '@/components/forms/UserPreviewModal'; 
 import api from '@/api/api';
 
+import { sendWelcomeEmail } from "@/Utils/emailService";
+
 import { Toast } from 'primereact/toast'; 
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -49,49 +51,72 @@ const UserManagement = () => {
   };
 
   const handleSaveUser = async (userData: any) => {
-    const isEdit = modalMode === 'edit';
-    const endpoint = isEdit ? `/users/${userData.userId}` : `/users`;
+  const isEdit = modalMode === 'edit';
+  const endpoint = isEdit ? `/users/${userData.userId}` : `/users`;
 
-    try {
-      const res = isEdit 
-        ? await api.put(endpoint, userData) 
-        : await api.post(endpoint, userData);
-      
-      if (res.status === 200 || res.status === 201) {
-        setRefreshKey(prev => prev + 1);
-        setIsModalOpen(false);
-        toast.current?.show({
-          severity: 'success',
-          summary: isEdit ? 'User Updated' : 'User Created',
-          detail: isEdit 
-            ? 'User details updated successfully' 
-            : 'User created successfully',
-          life: 3000
-        });
+  try {
+    const res = isEdit
+      ? await api.put(endpoint, userData)
+      : await api.post(endpoint, userData);
+
+    console.log("CREATE USER RESPONSE:", res);
+    console.log("CREATE USER DATA:", res.data);
+
+    if (
+      !isEdit &&
+      import.meta.env.VITE_EMAILJS_SERVICE_ID &&
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID &&
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY &&
+      res.data?.email &&
+      res.data?.tempPassword
+    ) {
+      try {
+        await sendWelcomeEmail(
+          res.data.email,
+          res.data.tempPassword
+        );
+
+        console.log("Email sent successfully");
+      } catch (mailError) {
+        console.error("Email sending failed:", mailError);
       }
-    } catch (err: any) {
-       const errorMessage = err.response?.data?.message || "";
+    }
+
+    setRefreshKey(prev => prev + 1);
+    setIsModalOpen(false);
+
+    toast.current?.show({
+      severity: 'success',
+      summary: isEdit ? 'User Updated' : 'User Created',
+      detail: isEdit
+        ? 'User details updated successfully'
+        : 'User created successfully',
+      life: 3000
+    });
+
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || "";
 
     if (
       errorMessage.includes("duplicate key") ||
       errorMessage.includes("unique_email") ||
       errorMessage.includes("SQLSTATE 23505")
     ) {
-      toast.current?.show({ 
+      toast.current?.show({
         severity: 'warn',
-        summary: 'Duplicate Email', 
+        summary: 'Duplicate Email',
         detail: 'This email is already registered. Please use a different one.',
-        life: 5000 
+        life: 5000
       });
     } else {
-      toast.current?.show({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: errorMessage || "Save failed" 
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: errorMessage || "Save failed"
       });
-    }  
     }
-  };
+  }
+};
 
   // ✅ Trigger Custom Modal
   const triggerDelete = (user: any) => {
