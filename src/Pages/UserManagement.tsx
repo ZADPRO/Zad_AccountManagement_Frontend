@@ -62,6 +62,10 @@ const UserManagement = () => {
     console.log("CREATE USER RESPONSE:", res);
     console.log("CREATE USER DATA:", res.data);
 
+    console.log("SERVICE ID:", import.meta.env.VITE_EMAILJS_SERVICE_ID);
+    console.log("TEMPLATE ID:", import.meta.env.VITE_EMAILJS_TEMPLATE_ID);
+    console.log("PUBLIC KEY:", import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+
     if (
       !isEdit &&
       import.meta.env.VITE_EMAILJS_SERVICE_ID &&
@@ -70,6 +74,9 @@ const UserManagement = () => {
       res.data?.email &&
       res.data?.tempPassword
     ) {
+
+      console.log("ENTERED EMAILJS BLOCK");
+      
       try {
         await sendWelcomeEmail(
           res.data.email,
