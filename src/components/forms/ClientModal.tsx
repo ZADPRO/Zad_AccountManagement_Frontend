@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   X,
-  ChevronRight,
-  ChevronLeft,
   Edit3,
   Eye,
   CheckCircle2,
@@ -30,9 +28,12 @@ const ClientModal = ({
   initialData,
   mode = "create",
 }: ClientModalProps) => {
+  const COMPANY_IEC = "AACCZ1874E";
+
   const generateClientCode = () => {
     const year = new Date().getFullYear();
     const random = Math.floor(100 + Math.random() * 900);
+    
     return `CLT-${year}-${random}`;
   };
 
@@ -43,7 +44,7 @@ const ClientModal = ({
     return 1;
   };
 
-  const [step, setStep] = useState(1);
+ 
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(mode !== "view");
   const [countries, setCountries] = useState<DropdownItem[]>([]);
@@ -76,28 +77,24 @@ const ClientModal = ({
   );
 
   const emptyForm = {
-    id: "",
-    clientCode: "",
-    name: "",
-    email: "",
-    mobileNumber: "",
+  id: "",
+  clientCode: "",
+  name: "",
+  email: "",
+  mobileNumber: "",
+  billingAddress: "",
+  billingCountryId: 0,
+  billingStateId: 0,
+  pan: "",
+  supplyType: "B2B",
+  gstNumber: "",
+  taxPercentage: 0,
+  cgst: 0,
+  sgst: 0,
+  igst: 0,
 
-    // Step 1 - Registered Address
-    registeredAddress: "",
-    registeredCountry: "India",
-    registeredState: "",
-    zip: "",
 
-    // Step 2 - Billing + Tax
-    billingAddress: "",
-    billingCountryId: 0,
-    billingStateId: 0,
-    gstStatus: "Registered",
-    supplyType: "B2B",
-    gstNumber: "",
-    pan: "",
-    taxPercentage: 0,
-  };
+};
 
   const [formData, setFormData] = useState(emptyForm);
 
@@ -144,33 +141,26 @@ const ClientModal = ({
               id: clientDetails.clientId || clientId,
               clientCode: clientDetails.clientCode || "",
               name: clientDetails.name || clientDetails.businessName || "",
-              email: clientDetails.email || null,
+              email: clientDetails.email || "",
               mobileNumber:
                 clientDetails.mobilenumber || clientDetails.mobileNumber || "",
-
-              // Registered
-              registeredAddress:
-                clientDetails.registeredAddress || clientDetails.address || "",
-              registeredCountry:
-                clientDetails.countryName || clientDetails.country || "India",
-              registeredState:
-                clientDetails.stateName || clientDetails.state || "",
-              zip: clientDetails.zip?.toString() || "",
+              
+              
 
               // Billing + Tax
               billingAddress: clientDetails.billingAddress || "",
               billingCountryId: billingCountry?.id as number || 0,
               billingStateId: billingState?.id as number || 0,
-              gstStatus:
-                clientDetails.gststatus ||
-                clientDetails.gstStatus ||
-                "Registered",
+            
               supplyType:
                 clientDetails.supplytype || clientDetails.supplyType || "B2B",
               gstNumber:
                 clientDetails.gstnumber || clientDetails.gstNumber || "",
               pan: clientDetails.pan || "",
               taxPercentage: clientDetails.taxPercentage || clientDetails.tax_percentage || 0,
+              cgst: clientDetails.cgst || 0,
+              sgst: clientDetails.sgst || 0,
+              igst: clientDetails.igst || 0,
             });
           }
         } else {
@@ -186,7 +176,7 @@ const ClientModal = ({
         );
       } finally {
         setLoading(false);
-        setStep(1);
+        
         setIsEditing(mode !== "view");
         setShowPreview(false);
       }
@@ -208,43 +198,43 @@ const ClientModal = ({
   );
   const isIndiaBilling = billingCountryObj?.name === "India";
   const isValidGSTIN = (gstin: string) =>
-  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin);
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(
+    gstin.toUpperCase().trim()
+  );
   // --- Updated Step 1 Validation ---
   // --- Updated Step 1 Validation (Mandatory: Business Name, Mobile) ---
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
+  
 
-    if (isEditing && step === 1) {
-      // 1. Business Name
-      if (!formData.name.trim()) newErrors.name = "required";
-      
-      // 2. Mobile Number (10 digits)
-      if (!isValidMobile(formData.mobileNumber)) {
-        newErrors.mobileNumber = formData.mobileNumber.trim() === "" 
-          ? "required" 
-          : "10 digits required";
-      }
-    } 
-    // 3. Email (optional but must be valid if entered)
-const email = formData.email?.trim(); 
-if (email && !isValidEmail(email)) {
-  newErrors.email = "invalid email";
-}
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setErrors({});
-    setStep(2);
-  };
+    
 
   // --- Updated Step 2 Validation (Mandatory: Billing Addr, Country, State if India) ---
-  const handleFinalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinalSubmit = (
+  e?: React.FormEvent | React.MouseEvent
+) => {
+  e?.preventDefault();
+
     const finalErrors: Record<string, string> = {};
+
+// Business Name
+if (!formData.name.trim()) {
+  finalErrors.name = "required";
+}
+
+// Mobile (optional)
+if (
+  formData.mobileNumber &&
+  !isValidMobile(formData.mobileNumber)
+) {
+  finalErrors.mobileNumber = "10 digits required";
+}
+
+
+// Email (optional)
+const email = formData.email?.trim();
+
+if (email && !isValidEmail(email)) {
+  finalErrors.email = "invalid email";
+}
 
     // 3. Billing Address
     if (!formData.billingAddress.trim())
@@ -259,15 +249,12 @@ if (email && !isValidEmail(email)) {
       finalErrors.billingStateId = "required";
 
     if (
-      isIndiaBilling &&
-      formData.gstStatus === "Registered"
-    ) {
-      if (!formData.gstNumber.trim()) {
-        finalErrors.gstNumber = "required";
-      } else if (!isValidGSTIN(formData.gstNumber.toUpperCase())) {
-        finalErrors.gstNumber = "invalid GSTIN";
-      }
-    }
+  isIndiaBilling &&
+  formData.gstNumber.trim() &&
+  !isValidGSTIN(formData.gstNumber)
+) {
+  finalErrors.gstNumber = "invalid GSTIN";
+}
     if (Object.keys(finalErrors).length > 0) {
       setErrors(finalErrors);
       return;
@@ -276,28 +263,42 @@ if (email && !isValidEmail(email)) {
     setErrors({});
 
     // Payload remains the same, ensuring optional fields default to empty strings
-    const payload = { 
-      clientId: formData.id, 
-      clientCode: formData.clientCode || generateClientCode(),
-      name: formData.name,
-      businessName: formData.name,
-      supplytypeid: getSupplyTypeId(formData.supplyType),
-      clienttype: formData.supplyType === "Export" ? "Export" : "Direct",
-      email: formData.email || "", 
-      mobilenumber: formData.mobileNumber,
-      registeredAddress: formData.registeredAddress || "",
-      countryName: formData.registeredCountry || "India",
-      stateName: formData.registeredState || "",
-      zip: Number(formData.zip) || 0,
-      billingAddress: formData.billingAddress,
-      billingCountryId: formData.billingCountryId,
-      billingStateId: formData.billingStateId === 0 ? null : formData.billingStateId,
-      gstnumber: isIndiaBilling ? formData.gstNumber : "",
-      pan: formData.pan || "",
-      isexport: !isIndiaBilling,
-      gststatus: isIndiaBilling ? formData.gstStatus : "Unregistered",
-      tax_percentage: formData.taxPercentage || 0,
-    };
+    const billingCountryName =
+  countries.find(c => c.id === formData.billingCountryId)?.name || "-";
+
+const billingStateName =
+  states.find(s => s.id === formData.billingStateId)?.name || "-";
+
+const payload = {
+  clientId: formData.id,
+  clientCode: formData.clientCode || generateClientCode(),
+  name: formData.name,
+  businessName: formData.name,
+  supplytypeid: getSupplyTypeId(formData.supplyType),
+  supplyType: formData.supplyType,
+  clienttype: formData.supplyType,
+  email: formData.email || "",
+  mobilenumber: formData.mobileNumber,
+  billingAddress: formData.billingAddress,
+  billingCountryId: formData.billingCountryId,
+  billingStateId:
+    formData.billingStateId === 0 ? null : formData.billingStateId,
+  gstnumber: isIndiaBilling ? formData.gstNumber : "",
+  pan: isIndiaBilling ? formData.pan : "",
+  isexport: !isIndiaBilling,
+  cgst: formData.cgst,
+sgst: formData.sgst,
+igst: formData.igst,
+tax_percentage:
+  formData.cgst +
+  formData.sgst +
+  formData.igst,
+
+  billingCountryName,
+  billingStateName,
+};
+
+
 
     setPreparedPayload(payload);
     setShowPreview(true);
@@ -329,16 +330,8 @@ if (email && !isValidEmail(email)) {
               {mode === "edit" && "Edit Client"}
               {mode === "create" && "Add New Client"}
             </h2>
-            <div className="flex gap-1.5 mt-1">
-              {[1, 2].map((s) => (
-                <div
-                  key={s}
-                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
-                    step === s ? "bg-blue-600" : "bg-slate-200"
-                  }`}
-                />
-              ))}
-            </div>
+            
+             
           </div>
         </div>
         <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
@@ -356,8 +349,8 @@ if (email && !isValidEmail(email)) {
         ) : (
           <form onSubmit={handleFinalSubmit} noValidate className="p-6">
 
-            {/* STEP 1 — Contact & Registered Address */}
-            {step === 1 && (
+            {/* STEP 1 — Contact Information */}
+            {(
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                   
@@ -386,7 +379,7 @@ if (email && !isValidEmail(email)) {
                   </div>
 
                   <div className="space-y-1">
-                    <FieldLabel label="Mobile" fieldName="mobileNumber" required />
+                    <FieldLabel label="Mobile" fieldName="mobileNumber" />
                     <input
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.mobileNumber ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
@@ -395,79 +388,17 @@ if (email && !isValidEmail(email)) {
                     />
                   </div>
 
-                  <div className="col-span-2 space-y-1">
-                    <FieldLabel label="Registered Address" fieldName="registeredAddress"/>
-                    <textarea
-                      disabled={!isEditing}
-                      className={`${inputClass} h-16 py-2 text-sm resize-none ${errors.registeredAddress ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                      value={formData.registeredAddress}
-                      onChange={(e) => setFormData({ ...formData, registeredAddress: e.target.value })}
-                    />
-                  </div>
+                  
 
-                  <div className={formData.registeredCountry === "India" ? "col-span-1 space-y-1" : "col-span-2 space-y-1"}>
-                    <FieldLabel label="Country" fieldName="registeredCountry"/>
-                    <select
-                      disabled={!isEditing}
-                      className={`${inputClass} py-2 text-sm ${errors.registeredCountry ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                      value={formData.registeredCountry}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          registeredCountry: e.target.value,
-                          registeredState: "",
-                        })
-                      }
-                    >
-                      <option value="">Select</option>
-                      {countries.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
+          
 
-                  {/* State + Zip — only for India */}
-                  <div className="space-y-3">
-  {/* Row 1: State (Only for India) */}
-  {formData.registeredCountry === "India" && (
-    <div className="space-y-1">
-      <FieldLabel label="State" fieldName="registeredState" required />
-      <select
-        disabled={!isEditing}
-        className={`${inputClass} py-2 text-sm ${errors.registeredState ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-        value={formData.registeredState}
-        onChange={(e) => setFormData({ ...formData, registeredState: e.target.value })}
-      >
-        <option value="">State</option>
-        {states.map((s) => (
-          <option key={s.id} value={s.name}>{s.name}</option>
-        ))}
-      </select>
-    </div>
-  )}
-
-  {/* Row 2: Zip (Always visible, but now on its own line) */}
-  <div className="space-y-1">
-    <FieldLabel 
-      label="Zip" 
-      fieldName="zip" 
-      required={formData.registeredCountry === "India"} 
-    />
-    <input
-      disabled={!isEditing}
-      placeholder="Enter Zip/Postal Code"
-      className={`${inputClass} py-2 text-sm ${errors.zip ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-      value={formData.zip}
-      onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-    />
-  </div>
-</div>
+              
                 </div>
               </div>
             )}
 
             {/* STEP 2 — Billing Address & Tax Info */}
-            {step === 2 && (
+            {(
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 
                 <div className="space-y-1">
@@ -487,19 +418,36 @@ if (email && !isValidEmail(email)) {
                       disabled={!isEditing}
                       className={`${inputClass} py-2 text-sm ${errors.billingCountryId ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                       value={formData.billingCountryId}
+                      
                       onChange={(e) => {
-                        const selectedId = Number(e.target.value);
-                        const selectedCountry = countries.find((c) => c.id === selectedId);
-                        const isExport = selectedCountry?.name !== "India";
-                        setFormData({
-                          ...formData,
-                          billingCountryId: selectedId,
-                          billingStateId: 0,
-                          supplyType: isExport ? "Export" : "B2B",
-                          gstStatus: isExport ? "URD" : "Registered",
-                          gstNumber: isExport ? "" : formData.gstNumber,
-                        });
-                      }}
+  const selectedId = Number(e.target.value);
+
+  const selectedCountry = countries.find(
+    (c) => Number(c.id) === selectedId
+  );
+
+  const isExport = selectedCountry?.name !== "India";
+
+  if (isExport) {
+    setFormData({
+      ...formData,
+      billingCountryId: selectedId,
+      billingStateId: 0,
+      gstNumber: "",
+      pan: "",
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+    });
+  } else {
+    setFormData({
+      ...formData,
+      billingCountryId: selectedId,
+      billingStateId: 0,
+    });
+  }
+}}
+
                     >
                       <option value={0}>Select Country</option>
                       {countries.map((c) => (
@@ -516,7 +464,34 @@ if (email && !isValidEmail(email)) {
                         disabled={!isEditing}
                         className={`${inputClass} py-2 text-sm ${errors.billingStateId ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                         value={formData.billingStateId}
-                        onChange={(e) => setFormData({ ...formData, billingStateId: Number(e.target.value) })}
+                        onChange={(e) => {
+  const stateId = Number(e.target.value);
+
+  const selectedState = states.find(
+    (s) => Number(s.id) === stateId
+  );
+
+  const isTamilNadu =
+    selectedState?.name?.toLowerCase() === "tamil nadu";
+
+  if (isTamilNadu) {
+    setFormData({
+      ...formData,
+      billingStateId: stateId,
+      cgst: 9,
+      sgst: 9,
+      igst: 0,
+    });
+  } else {
+    setFormData({
+      ...formData,
+      billingStateId: stateId,
+      cgst: 0,
+      sgst: 0,
+      igst: 18,
+    });
+  }
+}}
                       >
                         <option value={0}>Select State</option>
                         {states.map((s) => (
@@ -530,74 +505,105 @@ if (email && !isValidEmail(email)) {
                 <div className="border-t border-slate-100 pt-4 space-y-4">
                   
                   {/* GST Status + Supply Type — India only */}
-                  {isIndiaBilling && (
+                  
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <FieldLabel label="GST Status" fieldName="gstStatus" />
-                        <select
-                          disabled={!isEditing}
-                          className={`${inputClass} py-2 text-sm`}
-                          value={formData.gstStatus}
-                          onChange={(e) => setFormData({ ...formData, gstStatus: e.target.value })}
-                        >
-                          <option value="Registered">Registered</option>
-                          <option value="URD">Unregistered</option>
-                        </select>
-                      </div>
+                    
                       <div className="space-y-1">
                         <FieldLabel label="Supply Type" fieldName="supplyType" />
                         <select
                           disabled={!isEditing}
                           className={`${inputClass} py-2 text-sm`}
                           value={formData.supplyType}
-                          onChange={(e) => setFormData({ ...formData, supplyType: e.target.value })}
-                        >
-                          <option value="B2B">B2B</option>
-                          <option value="B2C">B2C</option>
-                        </select>
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                                supplyType: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="B2B">B2B</option>
+                            <option value="B2C">B2C</option>
+                            <option value="C2C">C2C</option>
+                          </select>
                       </div>
                     </div>
-                  )}
+
+                  
+
+                  
 
                   {/* GSTIN — India + Registered only */}
-                  {isIndiaBilling && formData.gstStatus === "Registered" && (
+                  {isIndiaBilling &&  (
                     <div className="space-y-1">
-                      <FieldLabel label="GSTIN" fieldName="gstNumber" required />
+                      <FieldLabel label="GSTIN" fieldName="gstNumber" />
                       <input
                         disabled={!isEditing}
                         className={`${inputClass} py-2 text-sm ${errors.gstNumber ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
                         value={formData.gstNumber}
-                        onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            gstNumber: e.target.value.toUpperCase(),
+                          })
+                        }
                       />
                     </div>
                   )}
 
                   {/* PAN / Tax ID + Tax % */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <FieldLabel label={isIndiaBilling ? "PAN" : "Tax ID"} fieldName="pan" />
-                      <input
-                        disabled={!isEditing}
-                        className={`${inputClass} py-2 text-sm ${errors.pan ? "border-rose-500 ring-2 ring-rose-500/5" : ""}`}
-                        value={formData.pan}
-                        onChange={(e) => setFormData({ ...formData, pan: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <FieldLabel label="Tax %" fieldName="taxPercentage" />
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        disabled={!isEditing}
-                        className={`${inputClass} py-2 text-sm`}
-                        value={formData.taxPercentage}
-                        onChange={(e) =>
-                          setFormData({ ...formData, taxPercentage: Number(e.target.value) })
-                        }
-                      />
-                    </div>
-                  </div>
+
+  {isIndiaBilling && (
+    <div className="space-y-1">
+      <FieldLabel label="PAN" fieldName="pan" />
+      <input
+        disabled={!isEditing}
+        className={`${inputClass} py-2 text-sm`}
+        value={formData.pan}
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            pan: e.target.value,
+          })
+        }
+      />
+    </div>
+  )}
+
+  <div className="space-y-1">
+    <div className="grid grid-cols-3 gap-4">
+
+  <div>
+    <FieldLabel label="CGST %" fieldName="cgst" />
+    <input
+      readOnly
+      className={`${inputClass} py-2 text-sm bg-slate-50`}
+      value={formData.cgst}
+    />
+  </div>
+
+  <div>
+    <FieldLabel label="SGST %" fieldName="sgst" />
+    <input
+      readOnly
+      className={`${inputClass} py-2 text-sm bg-slate-50`}
+      value={formData.sgst}
+    />
+  </div>
+
+  <div>
+    <FieldLabel label="IGST %" fieldName="igst" />
+    <input
+      readOnly
+      className={`${inputClass} py-2 text-sm bg-slate-50`}
+      value={formData.igst}
+    />
+  </div>
+
+</div>
+  </div>
+
+</div>
                 </div>
               </div>
             )}
@@ -606,36 +612,25 @@ if (email && !isValidEmail(email)) {
       </div>
 
       {/* FOOTER - Fixed at bottom */}
-      <div className="p-6 pt-4 border-t border-slate-100 bg-white rounded-b-3xl shrink-0 flex justify-between items-center">
-        <button
-          type="button"
-          onClick={step === 1 ? onClose : () => setStep(1)}
-          className="text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1 hover:text-slate-600"
-        >
-          {step > 1 && <ChevronLeft size={14} />}
-          {step === 1 ? "Cancel" : "Back"}
-        </button>
+      <div className="p-6 border-t border-slate-100 flex justify-between">
 
-        {step === 1 ? (
-          <button
-            type="button"
-            onClick={handleNext}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all"
-          >
-            Next <ChevronRight size={16} />
-          </button>
-        ) : (
-          isEditing && (
-            <button
-              type="button"
-              onClick={handleFinalSubmit}
-              className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 active:scale-95 transition-all"
-            >
-              Review Details <Eye size={16} />
-            </button>
-          )
-        )}
-      </div>
+  <button
+    type="button"
+    onClick={onClose}
+    className="text-slate-500"
+  >
+    Cancel
+  </button>
+
+  <button
+    type="button"
+    onClick={handleFinalSubmit}
+    className="bg-emerald-600 text-white px-6 py-3 rounded-xl"
+  >
+    Review Details
+  </button>
+
+</div>
 
       {/* PREVIEW — fully scrollable, pinned footer */}
       {showPreview && preparedPayload && (
@@ -654,11 +649,31 @@ if (email && !isValidEmail(email)) {
                   { label: "Business", val: preparedPayload.name },
                   { label: "Email", val: preparedPayload.email },
                   { label: "Contact", val: preparedPayload.mobilenumber },
-                  { label: "Tax ID / PAN", val: preparedPayload.pan },
-                  { label: "GST Status", val: preparedPayload.gststatus },
-                  { label: "GSTIN", val: preparedPayload.gstnumber || "-" },
-                  { label: "Supply Type", val: preparedPayload.clienttype },
-                  { label: "Tax %", val: `${preparedPayload.tax_percentage}%` },
+                  
+                    ...(preparedPayload.isexport
+                      ? [
+                          { label: "IEC Code", val: COMPANY_IEC },
+                        ]
+                      : [
+                          { label: "PAN", val: preparedPayload.pan || "-" },
+                          { label: "GSTIN", val: preparedPayload.gstnumber || "-" },
+                        ]),
+
+                  { label: "Supply Type", val: preparedPayload.supplyType  },
+                  { label: "Billing Country", val: preparedPayload.billingCountryName },
+                   ...(preparedPayload.billingStateName &&
+                    preparedPayload.billingStateName !== "-"
+                      ? [
+                          {
+                            label: "Billing State",
+                            val: preparedPayload.billingStateName,
+                          },
+                        ]
+                      : []),
+                  { label: "CGST", val: `${preparedPayload.cgst}%` },
+                  { label: "SGST", val: `${preparedPayload.sgst}%` },
+                  { label: "IGST", val: `${preparedPayload.igst}%` },
+                  { label: "Total Tax", val: `${preparedPayload.tax_percentage}%` },
                   { label: "Is Export", val: preparedPayload.isexport ? "Yes" : "No" },
                 ].map((item, idx) => (
                   <div key={idx}>
@@ -670,17 +685,7 @@ if (email && !isValidEmail(email)) {
                 ))}
               </div>
 
-              <div className="pt-3 border-t border-slate-200/60">
-                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
-                  Registered Address
-                </p>
-                <p className="font-semibold text-slate-700 leading-relaxed">
-                  {preparedPayload.registeredAddress}
-                  {preparedPayload.stateName ? `, ${preparedPayload.stateName}` : ""},{" "}
-                  {preparedPayload.countryName}
-                  {preparedPayload.zip ? ` - ${preparedPayload.zip}` : ""}
-                </p>
-              </div>
+              
 
               <div className="pt-3 border-t border-slate-200/60">
                 <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
