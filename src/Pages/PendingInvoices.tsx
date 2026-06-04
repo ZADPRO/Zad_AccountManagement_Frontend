@@ -108,10 +108,12 @@ const PendingInvoices = () => {
     }
   };
 
-  const filteredInvoices = invoices.filter(inv =>
+  const filteredInvoices = invoices
+  .filter(inv =>
     inv.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  )
+  .sort((a, b) => b.id - a.id);
 
   // --- Calculations ---
   const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);

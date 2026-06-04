@@ -19,11 +19,22 @@ const { userRole } = useAuth();
         {/* HEADER */}
         <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
           <tr className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <th className="px-6 py-5 border-b border-slate-200">Client Info</th>
-            <th className="px-6 py-5 border-b border-slate-200">Status</th>
-            <th className="px-6 py-5 border-b border-slate-200 font-mono">Client Code</th>
-            <th className="px-6 py-5 border-b border-slate-200 text-right">Management</th>
-          </tr>
+  <th className="px-6 py-5 border-b border-slate-200 font-mono">
+    Client Code
+  </th>
+
+  <th className="px-6 py-5 border-b border-slate-200">
+    Client Info
+  </th>
+
+  <th className="px-6 py-5 border-b border-slate-200">
+    Status
+  </th>
+
+  <th className="px-6 py-5 border-b border-slate-200 text-right">
+    Management
+  </th>
+</tr>
         </thead>
 
         {/* BODY */}
@@ -50,6 +61,13 @@ const { userRole } = useAuth();
             /* ✅ Data Rows */
             data.map((client) => (
               <tr key={client.clientId} className="hover:bg-slate-50 transition-all group">
+
+                {/* CLIENT CODE */}
+                <td className="px-6 py-4">
+                  <div className="text-xs font-mono text-slate-600 bg-slate-50 w-fit px-2 py-1 rounded border border-slate-200">
+                    {client.clientCode || 'N/A'}
+                  </div>
+                </td>
                 
                 {/* CLIENT INFO */}
                 <td className="px-6 py-4">
@@ -83,12 +101,7 @@ const { userRole } = useAuth();
                   </span>
                 </td>
 
-                {/* CLIENT CODE */}
-                <td className="px-6 py-4">
-                  <div className="text-xs font-mono text-slate-600 bg-slate-50 w-fit px-2 py-1 rounded border border-slate-200">
-                    {client.clientCode || 'N/A'}
-                  </div>
-                </td>
+                
               
 
                 {/* ACTIONS */}

@@ -39,7 +39,7 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
             <th className="px-6 py-5 border-b border-slate-200">Amount</th>
             <th className="px-6 py-5 border-b border-slate-200">Status</th>
             <th className="px-6 py-5 border-b border-slate-200">Due Date</th>
-            <th className="px-6 py-5 border-b border-slate-200 text-right"></th>
+            <th className="px-6 py-5 border-b border-slate-200 text-center">Actions</th>
           </tr>
         </thead>
 
