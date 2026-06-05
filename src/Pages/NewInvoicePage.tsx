@@ -5,7 +5,6 @@ import InvoiceItemsTable from '../components/invoice/InvoiceItemsTable';
 import InvoiceSummary from '../components/invoice/InvoiceSummary';
 import InvoiceHeader from '@/components/invoice/InvoiceHeader';
 import CustomFields from "../components/invoice/CustomInvoiceFields";
-import CurrencyDropdown from "../components/invoice/CurrencyDropdown";
 import { getSignatureAuthorities } from "../api/signatureAuthorityApi";
 import { type ClientListModel } from '@/types/clients';
 import { useNavigate } from 'react-router-dom';
@@ -111,7 +110,7 @@ const NewInvoice = () => {
     CustomFieldValue[]
   >([]);
 
-  const [currency, setCurrency] = useState("INR");
+  const [currency, setCurrency] = useState("");
 
   // ✅ BANK STATES
   const [banks, setBanks] = useState<any[]>([]);
@@ -121,18 +120,20 @@ const NewInvoice = () => {
   const [invoiceType, setInvoiceType] = useState('invoice');
 
   const [signatureAuthorities, setSignatureAuthorities] = useState<any[]>([]);
-  const [selectedSignatureAuthority, setSelectedSignatureAuthority] =
-  useState("");
+  const [selectedSignatureAuthority, setSelectedSignatureAuthority] = useState("");
 
    const [taxType, setTaxType] = useState(
   "IGST @ 18%"
     );
+    
+  const [currencies, setCurrencies] = useState<any[]>([]);
+
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState("");
 
     
 
-  const handleClientChange = (
-  clientId: string
-) => {
+  const handleClientChange = (clientId: string) => {
 
   setSelectedClientId(clientId);
 
@@ -260,6 +261,13 @@ const NewInvoice = () => {
       return;
     }
 
+    if (!selectedProfileId) {
+  showError(
+    "Please select a company profile"
+  );
+  return;
+}
+
     setIsSubmitting(true);
 
     // ✅ PAYLOAD
@@ -287,6 +295,8 @@ const NewInvoice = () => {
       updatedby: getStoredUserId(),
 
       taxtype: taxType,
+      
+      companyProfileId: Number(selectedProfileId),
       
 
       // ✅ ITEMS WITH CUSTOM FIELDS
@@ -508,6 +518,17 @@ console.log(
   }, []);
 
   useEffect(() => {
+  if (
+    currencies.length > 0 &&
+    !currency
+  ) {
+    setCurrency(
+      currencies[0].currencyCode
+    );
+  }
+}, [currencies]);
+
+  useEffect(() => {
 
   const loadSignatureAuthorities = async () => {
 
@@ -528,6 +549,54 @@ console.log(
   };
 
   loadSignatureAuthorities();
+
+}, []);
+
+useEffect(() => {
+  const loadCurrencies = async () => {
+    try {
+      const res = await api.get("/currencies");
+
+      setCurrencies(res.data || []);
+    } catch (err) {
+      console.error(
+        "Failed to load currencies",
+        err
+      );
+    }
+  };
+
+  loadCurrencies();
+}, []);
+
+
+
+
+useEffect(() => {
+
+  const loadProfiles = async () => {
+
+    try {
+
+      const res =
+        await api.get(
+          "/company-profiles"
+        );
+
+      setProfiles(
+        res.data || []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Failed to load company profiles",
+        err
+      );
+    }
+  };
+
+  loadProfiles();
 
 }, []);
 
@@ -631,14 +700,32 @@ onTaxTypeChange={setTaxType}
                 }
               />
 
-              <CurrencyDropdown
-                selectedCurrency={
-                  currency
-                }
-                onCurrencyChange={
-                  setCurrency
-                }
-              />
+            <div className="flex flex-col gap-2">
+  <label className="text-sm font-semibold text-slate-700">
+    Currency
+  </label>
+
+  <select
+    value={currency}
+    onChange={(e) =>
+      setCurrency(e.target.value)
+    }
+    className="border border-slate-300 rounded-xl px-4 py-3 bg-white text-sm"
+  >
+    <option value="">
+      Select Currency
+    </option>
+
+    {currencies.map((curr) => (
+      <option
+        key={curr.id}
+        value={curr.currencyCode}
+      >
+        {curr.currencyCode} - {curr.currencyName}
+      </option>
+    ))}
+  </select>
+</div>
 
               {/* SIGNATURE AUTHORITY */}
   <div className="flex flex-col gap-2">
@@ -675,6 +762,51 @@ onTaxTypeChange={setTaxType}
     </select>
   </div>
             </div>
+
+            {/* COMPANY PROFILE TABLE */}
+ <div className="flex flex-col gap-2">
+
+  <label className="text-sm font-semibold text-slate-700">
+    Company Profile
+  </label>
+
+  <select
+    value={selectedProfileId}
+    onChange={(e) =>
+      setSelectedProfileId(
+        e.target.value
+      )
+    }
+    className="
+      border
+      border-slate-300
+      rounded-xl
+      px-4 py-3
+      bg-white
+      text-sm
+    "
+  >
+
+    <option value="">
+      Select Profile
+    </option>
+
+    {profiles.map((profile) => (
+
+      <option
+        key={profile.id}
+        value={profile.id}
+      >
+        {profile.companyName}
+      </option>
+
+    ))}
+
+  </select>
+
+</div>
+
+
 
             {/* ITEMS TABLE */}
             <InvoiceItemsTable

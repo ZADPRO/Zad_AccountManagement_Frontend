@@ -162,9 +162,10 @@ if (decryptedResponse?.status) {
                 </div>
 
                 
+                
 
                 {/* Form Content */}
-                <div className="flex-1 overflow-y-auto px-8 py-8 bg-white space-y-8">
+                <div className="px-8 pt-4 pb-6 bg-white space-y-6 shrink-0">
                     
                     {/* Field Label */}
                     <div className="group space-y-2">
@@ -195,9 +196,53 @@ if (decryptedResponse?.status) {
                    
                 </div>
 
-                <div className="border-t border-slate-100 pt-8 mt-8">
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-slate-100 flex justify-end gap-3 bg-white">
+                    <button onClick={onHide} className="
+  w-32
+  h-11
+  rounded-xl
+  text-xs
+  font-black
+  uppercase
+  tracking-widest
+  text-slate-400
+  hover:bg-slate-50
+  transition-all
+">
+                        Cancel
+                    </button>
+
+                    <button
+                        onClick={handleSave}
+                        disabled={loading || !formData.fieldLabel}
+                        className="
+  w-64
+  h-11
+  bg-blue-600
+  hover:bg-blue-700
+  text-white
+  rounded-xl
+  text-xs
+  font-black
+  uppercase
+  tracking-[0.15em]
+  flex
+  items-center
+  justify-center
+  gap-2
+  transition-all
+  disabled:opacity-50
+"
+                    >
+                        {loading ? 'Processing...' : <><Check size={18} strokeWidth={3} /> {isEdit ? "Update Field" : "Define Field"}</>}
+                    </button>
+                </div>
+
+
+                <div className="border-t border-slate-100 pt-2 flex-1 min-h-0">
                 {/* Existing Fields Table */}
-                <div className="pt-6 pb-6 px-10">
+                <div className="px-8 pt-2 pb-4 h-full flex flex-col">
 
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -209,7 +254,9 @@ if (decryptedResponse?.status) {
                     </span>
                   </div>
 
-                  <div className="overflow-hidden rounded-3xl border border-slate-200 px-6">
+                  <div
+  className="flex-1 min-h-0 overflow-y-auto rounded-3xl border border-slate-200 px-6"
+>
 
                     <table className="w-full">
 
@@ -332,20 +379,7 @@ if (decryptedResponse?.status) {
 
 
 
-                {/* Footer */}
-                <div className="px-8 py-6 border-t border-slate-100 flex gap-4 bg-white shadow-2xl">
-                    <button onClick={onHide} className="flex-1 h-14 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">
-                        Cancel
-                    </button>
-
-                    <button
-                        onClick={handleSave}
-                        disabled={loading || !formData.fieldLabel}
-                        className="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/10 flex items-center justify-center gap-3 transition-all disabled:opacity-50"
-                    >
-                        {loading ? 'Processing...' : <><Check size={18} strokeWidth={3} /> {isEdit ? "Update Field" : "Define Field"}</>}
-                    </button>
-                </div>
+                
             </div>
         </Sidebar>
         </>
