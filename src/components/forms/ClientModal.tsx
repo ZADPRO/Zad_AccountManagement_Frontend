@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import api from "@/api/api";
 
+
 interface DropdownItem {
   id: number | string;
   name: string;
@@ -504,7 +505,7 @@ tax_percentage:
 
                 <div className="border-t border-slate-100 pt-4 space-y-4">
                   
-                  {/* GST Status + Supply Type — India only */}
+                  {/*  Supply Type — India only */}
                   
                     <div className="grid grid-cols-2 gap-4">
                     

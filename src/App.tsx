@@ -68,6 +68,7 @@ const AppContent = () => {
       <Route path="/dashboard" element={<Shell><Dashboard /></Shell>} />
       <Route path="/recipient-master" element={<Shell><RecipientMaster /></Shell>} />
       <Route path="/invoices/new" element={<Shell><NewInvoice /></Shell>} />
+      <Route path="/invoices/edit/:id" element={<Shell><NewInvoice /></Shell>}/>      
       <Route path="/invoices/pending" element={<Shell><PendingInvoices /></Shell>} />
       <Route path="/Settings" element={<Shell><SettingsPage /></Shell>} />
       

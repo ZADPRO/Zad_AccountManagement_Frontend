@@ -1,5 +1,10 @@
 // import React from 'react';
-import { Eye, FileText, Calendar } from 'lucide-react';
+import {
+  Eye,
+  FileText,
+  Calendar,
+  Pencil
+} from 'lucide-react';
 import { type InvoiceListModel } from '@/Pages/PendingInvoices';
 
 interface Props {
@@ -7,15 +12,18 @@ interface Props {
   onView: (invoice: InvoiceListModel) => void;
   onPrint: (invoice: InvoiceListModel) => void;
   onDelete: (id: number) => void;
+  onEdit: (invoice: InvoiceListModel) => void;
 }
 
-const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
+const InvoiceListTable = ({ data, onView, onPrint, onDelete, onEdit }: Props) => {
 
   // ✅ Status Badge
   const getStatusBadge = (status: string) => {
     const base = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ";
 
     switch (status.toLowerCase()) {
+      case "draft":
+        return (<span className={`${base} bg-slate-100 text-slate-600 border-slate-200`}>Draft</span>);
       case 'paid':
         return <span className={`${base} bg-emerald-50 text-emerald-600 border-emerald-100`}>Paid</span>;
       case 'overdue':
@@ -34,7 +42,7 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
         {/* Header */}
         <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
           <tr className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <th className="px-6 py-5 border-b border-slate-200">Invoice / ID</th>
+            <th className="px-6 py-5 border-b border-slate-200">Invoice Number</th>
             <th className="px-6 py-5 border-b border-slate-200">Client</th>
             <th className="px-6 py-5 border-b border-slate-200">Amount</th>
             <th className="px-6 py-5 border-b border-slate-200">Status</th>
@@ -61,9 +69,7 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
                     <div className="font-mono font-bold text-slate-900 text-sm">
                       {invoice.invoiceNumber}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                      ID: {invoice.id}
-                    </div>
+                    
                   </div>
                 </div>
               </td>
@@ -102,6 +108,16 @@ const InvoiceListTable = ({ data, onView, onPrint, onDelete }: Props) => {
               {/* Actions */}
               <td className="py-5 px-6">
                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+
+                  
+  <button
+    onClick={() => onEdit(invoice)}
+    className="p-2 hover:bg-white hover:shadow-md text-slate-400 hover:text-amber-600 rounded-xl transition-all"
+    title="Edit Draft"
+  >
+    <Pencil size={16} />
+  </button>
+
 
                   {/* View */}
                   <button
