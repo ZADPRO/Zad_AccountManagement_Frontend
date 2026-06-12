@@ -428,6 +428,9 @@ if (id) {
         const rawData =
           res.data.data || res.data;
 
+
+  console.log("RAW CLIENT DATA =", rawData);
+
         setFullClientDetails({
   name: rawData.name || rawData.businessName || '-',
 
@@ -460,6 +463,14 @@ if (id) {
 
 const clientDetails = {
   name: rawData.name || rawData.businessName || "-",
+  supplytype:
+  rawData.supplyTypeId === 1
+    ? "B2B"
+    : rawData.supplyTypeId === 2
+    ? "B2C"
+    : rawData.supplyTypeId === 3
+    ? "C2C"
+    : "",
   clientCode: rawData.clientCode || "-",
   clienttype: rawData.clientType || "Standard",
   mobilenumber: rawData.mobileNumber || "-",
@@ -475,6 +486,7 @@ const clientDetails = {
   pan: rawData.pan || "-",
 };
 
+console.log("CLIENT DETAILS", clientDetails);
 
 
 setFullClientDetails(clientDetails);
@@ -599,7 +611,7 @@ useEffect(() => {
     fullClientDetails.billingStateName || "";
 
   if (isExport) {
-    console.log("EXPORT CLIENT -> NO TAX");
+    // console.log("EXPORT CLIENT -> NO TAX");
     setTaxType("NO TAX");
     return;
   }
@@ -908,6 +920,11 @@ companyLogoUrl: selectedProfile?.logoUrl || "",
 
     isexport:
       selectedClient?.isExport || false,
+
+       supplytype:
+    selectedClient?.supplytype ||
+    selectedClient?.supplyType ||
+    "",
   },
 
   bankDetails: selectedBank,

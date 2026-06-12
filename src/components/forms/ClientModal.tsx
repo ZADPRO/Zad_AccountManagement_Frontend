@@ -38,12 +38,13 @@ const ClientModal = ({
     return `CLT-${year}-${random}`;
   };
 
-  const getSupplyTypeId = (type: string) => {
-    if (type === "Export") return 3;
-    if (type === "B2B") return 1;
-    if (type === "B2C") return 2;
-    return 1;
-  };
+ const getSupplyTypeId = (type: string) => {
+  if (type === "B2B") return 1;
+  if (type === "B2C") return 2;
+  if (type === "C2C") return 3;
+
+  return 1;
+};
 
  
   const [loading, setLoading] = useState(false);
@@ -276,7 +277,7 @@ const payload = {
   name: formData.name,
   businessName: formData.name,
   supplytypeid: getSupplyTypeId(formData.supplyType),
-  supplyType: formData.supplyType,
+  supplytype: formData.supplyType,
   clienttype: formData.supplyType,
   email: formData.email || "",
   mobilenumber: formData.mobileNumber,
@@ -660,7 +661,7 @@ tax_percentage:
                           { label: "GSTIN", val: preparedPayload.gstnumber || "-" },
                         ]),
 
-                  { label: "Supply Type", val: preparedPayload.supplyType  },
+                  { label: "Supply Type", val: preparedPayload.supplytype },
                   { label: "Billing Country", val: preparedPayload.billingCountryName },
                    ...(preparedPayload.billingStateName &&
                     preparedPayload.billingStateName !== "-"
