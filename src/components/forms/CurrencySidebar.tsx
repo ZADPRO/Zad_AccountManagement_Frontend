@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-
 import { Sidebar } from "primereact/sidebar";
 import { InputText } from "primereact/inputtext";
-import {
-  
-  confirmDialog,
-} from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { UploadCloud } from "lucide-react";
+
 
 import {
   X,
   Check,
   Edit2,
   Trash2,
-  ShieldCheck,
+  DollarSign,
 } from "lucide-react";
 
 import api from "@/api/api";
@@ -26,25 +22,22 @@ interface Props {
 
   onSave: (
     data: any,
-    formData?: any,
     isEdit?: boolean
   ) => void;
 
   initialData?: any;
 
-  authorities: any[];
-
-  onEdit: (authority: any) => void;
-
-  onDelete: (id: number) => void;
+  currencies: any[];
+onEdit: (currency: any) => void;
+onDelete: (id: number) => void;
 }
 
-const SigningAuthoritySidebar: React.FC<Props> = ({
+const CurrencySidebar: React.FC<Props> = ({
   visible,
   onHide,
   onSave,
   initialData,
-  authorities,
+  currencies,
   onEdit,
   onDelete,
 }) => {
@@ -54,153 +47,69 @@ const SigningAuthoritySidebar: React.FC<Props> = ({
 
   const isEdit = !!initialData;
 
-  const [signaturePreview, setSignaturePreview] = useState("");
+  
 
 const [formData, setFormData] = useState({
-  name: "",
-  designation: "",
-  contactNumber: "",
-  email: "",
-  signatureUrl: "",
+  currencyCode: "",
+  currencyName: "",
+  currencySymbol: "",
 });
 
   useEffect(() => {
   if (initialData) {
     setFormData({
-      name: initialData.name || "",
-      designation: initialData.designation || "",
-      contactNumber: initialData.contactNumber || "",
-      email: initialData.email || "",
-      signatureUrl: initialData.signatureUrl || "",
+      currencyCode: initialData.currencyCode || "",
+      currencyName: initialData.currencyName || "",
+      currencySymbol: initialData.currencySymbol || "",
     });
-
-    setSignaturePreview(
-      initialData.signatureUrl || ""
-    );
-
   } else if (visible) {
     setFormData({
-      name: "",
-      designation: "",
-      contactNumber: "",
-      email: "",
-      signatureUrl: "",
+      currencyCode: "",
+      currencyName: "",
+      currencySymbol: "",
     });
-
-    setSignaturePreview(""); //Clear old image
   }
 }, [initialData, visible]);
 
-  const handleSignatureUpload = (file: File | undefined) => {
-  if (!file) return;
+  
 
-  const reader = new FileReader();
+  
 
-  reader.onloadend = () => {
-    const base64 = reader.result as string;
-
-    setSignaturePreview(base64);
-
-    setFormData((prev) => ({
-      ...prev,
-      signatureUrl: base64,
-    }));
-  };
-
-  reader.readAsDataURL(file);
-};
 
   const handleSave = async () => {
-    // NAME
-if (!formData.name.trim()) {
+    // CURRENCY CODE
+if (!formData.currencyCode.trim()) {
 
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Authority name is required",
+    detail: "Currency code is required",
     life: 3000,
   });
 
   return;
 }
 
-// DESIGNATION
-if (!formData.designation.trim()) {
+// CURRENCY NAME
+if (!formData.currencyName.trim()) {
 
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Role in organization is required",
+    detail: "Currency name is required",
     life: 3000,
   });
 
   return;
 }
 
-// CONTACT NUMBER
-if (!formData.contactNumber.trim()) {
+// CURRENCY SYMBOL
+if (!formData.currencySymbol.trim()) {
 
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Contact number is required",
-    life: 3000,
-  });
-
-  return;
-}
-
-// ONLY NUMBERS
-const phoneRegex = /^[0-9]+$/;
-
-if (!phoneRegex.test(formData.contactNumber)) {
-
-  toast.current?.show({
-    severity: "warn",
-    summary: "Validation",
-    detail: "Contact number must contain only numbers",
-    life: 3000,
-  });
-
-  return;
-}
-
-// LENGTH CHECK
-if (formData.contactNumber.length !== 10) {
-
-  toast.current?.show({
-    severity: "warn",
-    summary: "Validation",
-    detail: "Contact number must be 10 digits",
-    life: 3000,
-  });
-
-  return;
-}
-
-// EMAIL
-if (!formData.email.trim()) {
-
-  toast.current?.show({
-    severity: "warn",
-    summary: "Validation",
-    detail: "Email address is required",
-    life: 3000,
-  });
-
-  return;
-}
-
-// EMAIL FORMAT
-const emailRegex =
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-if (!emailRegex.test(formData.email)) {
-
-  toast.current?.show({
-    severity: "warn",
-    summary: "Validation",
-    detail: "Invalid email format",
+    detail: "Currency symbol is required",
     life: 3000,
   });
 
@@ -208,14 +117,11 @@ if (!emailRegex.test(formData.email)) {
 }
 
 
-
-  const payload = {
-  name: formData.name,
-  designation: formData.designation,
-  contactNumber: formData.contactNumber,
-  email: formData.email,
-  signatureUrl: formData.signatureUrl,
-};  
+const payload = {
+  currencyCode: formData.currencyCode,
+  currencyName: formData.currencyName,
+  currencySymbol: formData.currencySymbol,
+};
 
   setLoading(true);
 
@@ -224,12 +130,12 @@ if (!emailRegex.test(formData.email)) {
 
       if (isEdit) {
         res = await api.put(
-  `/signature-authorities/${initialData.id}`,
+  `/currencies/${initialData.id}`,
   payload
 );
       } else {
         res = await api.post(
-          "/signature-authorities",
+          "/currencies",
           payload
         );
       }
@@ -239,7 +145,6 @@ if (!emailRegex.test(formData.email)) {
 
 onSave(
   responseData,
-  formData,
   isEdit
 );
 
@@ -247,13 +152,13 @@ onSave(
         severity: "success",
         summary: "Success",
         detail: isEdit
-          ? "Authority updated successfully"
-          : "Authority created successfully",
+          ? "Currency updated successfully"
+          : "Currency created successfully",
         life: 3000,
       });
 
       onHide();
-      setSignaturePreview("");
+      
 
     } catch (err: any) {
       console.error(err);
@@ -303,7 +208,7 @@ onSave(
                   shadow-lg shadow-blue-200
                 "
               >
-                <ShieldCheck size={24} strokeWidth={2.5} />
+                <DollarSign size={24} strokeWidth={2.5} />
               </div>
 
               <div>
@@ -317,8 +222,8 @@ onSave(
                   "
                 >
                   {isEdit
-                    ? "Edit Signing Authority"
-                    : "New Signing Authority"}
+                    ? "Edit Currency"
+                    : "New Currency"}
                 </h2>
 
                 <p
@@ -331,7 +236,7 @@ onSave(
                     mt-0.5
                   "
                 >
-                  Invoice Authorization
+                  Currency Management
                 </p>
               </div>
             </div>
@@ -353,8 +258,6 @@ onSave(
           {/* FORM */}
           <div
             className="
-              flex-1
-              overflow-y-auto
               px-8
               py-4
               bg-white
@@ -362,7 +265,7 @@ onSave(
             "
           >
 
-            {/* NAME */}
+            {/* CURRENCY CODE */}
             <div className="space-y-2">
 
               <label
@@ -375,18 +278,18 @@ onSave(
                   ml-1
                 "
               >
-                Authority Name
+                Currency Code
               </label>
 
               <InputText
-                value={formData.name}
+                value={formData.currencyCode}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    name: e.target.value,
+                     currencyCode: e.target.value.toUpperCase(),
                   })
                 }
-                placeholder="e.g. John Doe"
+                placeholder="e.g. USD"
                 className="
                   w-full
                   h-14
@@ -404,7 +307,7 @@ onSave(
               />
             </div>
 
-            {/* DESIGNATION */}
+            {/* CURRENCY NAME*/}
             <div className="space-y-2">
 
               <label
@@ -417,18 +320,18 @@ onSave(
                   ml-1
                 "
               >
-                Role In Organization
+                Currency Name
               </label>
 
               <InputText
-                value={formData.designation}
+                value={formData.currencyName}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    designation: e.target.value,
+                    currencyName: e.target.value,
                   })
                 }
-                placeholder="e.g. Finance Manager"
+                placeholder="e.g. US Dollar"
                 className="
                   w-full
                   h-14
@@ -446,91 +349,7 @@ onSave(
               />
             </div>
 
-            {/* CONTACT */}
             <div className="space-y-2">
-
-              <label
-                className="
-                  text-[11px]
-                  font-black
-                  uppercase
-                  tracking-widest
-                  text-slate-500
-                  ml-1
-                "
-              >
-                Contact Number
-              </label>
-
-              <InputText
-                value={formData.contactNumber}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    contactNumber: e.target.value,
-                  })
-                }
-                placeholder="e.g. 9876543210"
-                className="
-                  w-full
-                  h-14
-                  px-5
-                  rounded-2xl
-                  border-slate-200
-                  bg-slate-50/50
-                  focus:bg-white
-                  focus:ring-4
-                  focus:ring-blue-500/10
-                  focus:border-blue-500
-                  font-bold
-                  transition-all
-                "
-              />
-            </div>
-
-            {/* EMAIL */}
-            <div className="space-y-2">
-
-              <label
-                className="
-                  text-[11px]
-                  font-black
-                  uppercase
-                  tracking-widest
-                  text-slate-500
-                  ml-1
-                "
-              >
-                Email Address
-              </label>
-
-              <InputText
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    email: e.target.value,
-                  })
-                }
-                placeholder="e.g. john@company.com"
-                className="
-                  w-full
-                  h-14
-                  px-5
-                  rounded-2xl
-                  border-slate-200
-                  bg-slate-50/50
-                  focus:bg-white
-                  focus:ring-4
-                  focus:ring-blue-500/10
-                  focus:border-blue-500
-                  font-bold
-                  transition-all
-                "
-              />
-            </div>
-
-            <div className="space-y-3">
   <label
     className="
       text-[11px]
@@ -541,92 +360,35 @@ onSave(
       ml-1
     "
   >
-    Signature
+    Currency Symbol
   </label>
 
-  <input
-    type="file"
-    accept="image/png,image/jpeg,image/jpg"
-    id="signature-upload"
-    className="hidden"
+  <InputText
+    value={formData.currencySymbol}
     onChange={(e) =>
-      handleSignatureUpload(e.target.files?.[0])
+      setFormData({
+        ...formData,
+        currencySymbol: e.target.value,
+      })
     }
-  />
-
-  <label
-    htmlFor="signature-upload"
+    placeholder="e.g. $"
     className="
       w-full
-      h-36
-      border-2
-      border-dashed
-      border-blue-300
-      rounded-3xl
+      h-14
+      px-5
+      rounded-2xl
+      border-slate-200
       bg-slate-50/50
-      hover:border-blue-400
-      hover:bg-blue-50/30
-      transition-all
-      cursor-pointer
-      flex
-      flex-col
-      items-center
-      justify-center
-      gap-3
     "
-  >
-    <UploadCloud size={32} className="text-slate-400" />
+  />
+</div>
 
-    <div className="text-center">
-      <p className="text-sm font-bold text-slate-700">
-        Upload Signature
-      </p>
-
-      <p className="text-[11px] text-slate-400 mt-1">
-        PNG / JPG only • Max 2MB
-      </p>
-    </div>
-  </label>
-
-  {signaturePreview && (
-  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
-    
-    <div className="flex items-start justify-between">
-      
-      <img
-        src={signaturePreview}
-        alt="Signature Preview"
-        className="h-24 object-contain bg-white rounded-xl border"
-      />
-
-      <button
-        type="button"
-        onClick={() => {
-          setSignaturePreview("");
-
-          setFormData((prev) => ({
-            ...prev,
-            signatureUrl: "",
-          }));
-        }}
-        className="
-          p-2
-          rounded-xl
-          hover:bg-rose-50
-          hover:text-rose-600
-          transition-all
-        "
-      >
-        <Trash2 size={18} />
-      </button>
-
-    </div>
+            
 
   </div>
-)}
 
   
-</div>
+
 
 {/* FOOTER */}
           <div className="px-8 py-4 border-t border-slate-100 flex justify-end gap-3 bg-white">
@@ -651,7 +413,12 @@ onSave(
 
   <button
     onClick={handleSave}
-    disabled={loading || !formData.name}
+    disabled={
+  loading ||
+  !formData.currencyCode ||
+  !formData.currencyName ||
+  !formData.currencySymbol
+}
     className="
       w-64
       h-11
@@ -676,7 +443,7 @@ onSave(
     ) : (
       <>
         <Check size={18} strokeWidth={3} />
-        {isEdit ? "Update Authority" : "Save Authority"}
+       {isEdit ? "Update Currency" : "Save Currency"}
       </>
     )}
   </button>
@@ -701,7 +468,7 @@ onSave(
                     text-slate-400
                   "
                 >
-                  Existing Authorities
+                  Existing Currencies
                 </h3>
 
                 <span
@@ -711,7 +478,7 @@ onSave(
                     text-slate-400
                   "
                 >
-                  {authorities.length} Total
+                  {currencies.length} Total
                 </span>
               </div>
 
@@ -720,9 +487,8 @@ onSave(
     rounded-3xl
     border
     border-slate-200
-    px-6
-    max-h-[320px]
     overflow-y-auto
+    max-h-[260px]
   "
 >
 
@@ -743,7 +509,7 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Name
+                        Code
                       </th>
 
                       <th
@@ -757,7 +523,7 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Role
+                        Currency Name
                       </th>
 
                       <th
@@ -771,7 +537,7 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Contact
+                        Symbol
                       </th>
 
                       <th
@@ -792,10 +558,10 @@ onSave(
 
                   <tbody>
 
-                    {authorities.map((authority) => (
+                    {currencies.map((currency) => (
 
                       <tr
-                        key={authority.id}
+                        key={currency.id}
                         className="
                           border-b
                           border-slate-100
@@ -805,59 +571,32 @@ onSave(
                         "
                       >
 
-                        <td className="px-4 py-4">
+                    <td className="px-4 py-4">
+  {currency.currencyCode}
+</td>
 
-                          <p
-                            className="
-                              font-bold
-                              text-sm
-                              text-slate-800
-                            "
-                          >
-                            {authority.name}
-                          </p>
+<td className="px-4 py-4">
+  {currency.currencyName}
+</td>
 
-                          <p
-                            className="
-                              text-xs
-                              text-slate-400
-                              mt-1
-                            "
-                          >
-                            {authority.email}
-                          </p>
-                        </td>
+<td className="px-4 py-4">
+  <span
+    className="
+      px-3 py-1
+      rounded-full
+      bg-slate-100
+      text-slate-600
+      text-[10px]
+      font-black
+      uppercase
+      tracking-wider
+    "
+  >
+    {currency.currencySymbol}
+  </span>
+</td>
 
-                        <td className="px-4 py-4">
-
-                          <span
-                            className="
-                              px-3 py-1
-                              rounded-full
-                              bg-slate-100
-                              text-slate-600
-                              text-[10px]
-                              font-black
-                              uppercase
-                              tracking-wider
-                            "
-                          >
-                            {authority.designation}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4">
-
-                          <p
-                            className="
-                              text-sm
-                              font-bold
-                              text-slate-700
-                            "
-                          >
-                            {authority.contactNumber}
-                          </p>
-                        </td>
+                        
 
                         <td className="px-4 py-4">
 
@@ -872,7 +611,7 @@ onSave(
 
                             <button
                               onClick={() =>
-                                onEdit(authority)
+                                onEdit(currency)
                               }
                               className="
                                 p-2
@@ -889,7 +628,7 @@ onSave(
                               onClick={() => {
                                 confirmDialog({
                                   message:
-                                    "Are you sure you want to delete this authority?",
+                                    "Are you sure you want to delete this currency?",
 
                                   header:
                                     "Delete Confirmation",
@@ -901,7 +640,7 @@ onSave(
                                     "p-button-danger",
 
                                   accept: () => {
-                                    onDelete(authority.id);
+                                    onDelete(currency.id);
                                   },
 
                                   reject: () => {},
@@ -926,22 +665,14 @@ onSave(
                     ))}
 
                   </tbody>
-
                 </table>
-
               </div>
             </div>
           </div>
-
-          </div>
-          
-
-          
-          
         </div>
       </Sidebar>
     </>
   );
 };
 
-export default SigningAuthoritySidebar;
+export default CurrencySidebar;

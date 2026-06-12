@@ -7,7 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 interface Item {
   id: string;
   description: string;
-  rate: number;
+  sacCode: string;
   amount: number;
   customFieldValues: {
     fieldId: number;
@@ -57,7 +57,7 @@ const InvoiceItemsTable = ({
       {
         id: Date.now().toString(),
         description: "",
-        rate: 0,
+        sacCode: "",
         amount: 0,
         customFieldValues: [],
         ...dynamicFields,
@@ -87,15 +87,7 @@ const InvoiceItemsTable = ({
   [field]: value,
 };
 
-const rate = Math.max(
-  0,
-  Number(updatedItem.rate)
-);
 
-updatedItem.rate = rate;
-
-// Temporary default quantity = 1
-updatedItem.amount = 1 * rate;
 
 /* =====================================================
    HANDLE CUSTOM FIELD VALUES
@@ -160,7 +152,7 @@ return updatedItem;
 
               <th className="py-4 px-3 min-w-62.5">Description</th>
               
-              <th className="py-4 px-3 w-36">Rate ({currency})</th>
+              <th className="py-4 px-3 w-32">SAC Code</th>
 
               {/* One <th> per user-selected custom field */}
               {customFields.map((col) => (
@@ -193,24 +185,22 @@ return updatedItem;
         />
       </td>
 
-      
-
-      {/* RATE */}
-      <td className="py-3 px-2 w-[18%]">
-        <input
-          type="number"
-          min={0}
-          value={item.rate}
-          onChange={(e) =>
-            updateItem(
-              item.id,
-              "rate",
-              Math.max(0, parseFloat(e.target.value) || 0)
-            )
-          }
-          className="w-full min-w-35 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm no-spinner"
-        />
-      </td>
+      {/* SAC CODE */}
+<td className="py-3 px-2 w-[18%]">
+  <input
+    type="text"
+    value={item.sacCode || ""}
+    onChange={(e) =>
+      updateItem(
+        item.id,
+        "sacCode",
+        e.target.value
+      )
+    }
+    placeholder="SAC Code"
+    className="w-full min-w-35 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
+  />
+</td>
 
       {/* CUSTOM FIELDS */}
       {customFields.map((col) => (
@@ -233,10 +223,21 @@ return updatedItem;
 
       {/* AMOUNT */}
       <td className="py-3 px-2 w-[16%]">
-        <div className="w-full min-w-35 bg-slate-50 border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold shadow-sm text-right">
-          {item.amount.toFixed(2)}
-        </div>
-      </td>
+  <input
+    type="number"
+    min={0}
+    value={item.amount}
+    onChange={(e) =>
+      updateItem(
+        item.id,
+        "amount",
+        Number(e.target.value) || 0
+      )
+    }
+    placeholder="Amount"
+    className="w-full min-w-35 bg-white border border-slate-400 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm text-right"
+  />
+</td>
 
       {/* DELETE */}
       <td className="py-3 px-2 text-center w-[6%]">

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Landmark, Plus } from "lucide-react";
+import { FileSignature, Landmark, Plus } from "lucide-react";
 import BankDetailsSidebar from "@/components/forms/BankDetails";
 import CustomFieldSidebar from "@/components/forms/AddFields";
 import api from "@/api/api";
 import SigningAuthoritySidebar from "../components/forms/SigningAuthoritySidebar";
+import CurrencySidebar from "@/components/forms/CurrencySidebar";
+import { DollarSign } from "lucide-react";
+import CompanyProfileSidebar from "@/components/forms/CompanyProfileSidebar";
+import { Building2 } from "lucide-react";
 
 // Interfaces matching your Go backend logic
 interface BankAccount {
@@ -27,6 +31,13 @@ interface CustomField {
   active: boolean;
 }
 
+interface Currency {
+  id?: number;
+  currencyCode: string;
+  currencyName: string;
+  currencySymbol: string;
+}
+
 const SettingsPage: React.FC = () => {
   // --- State Management (CLEANED UP - NO DUPLICATES) ---
   
@@ -45,6 +56,16 @@ const SettingsPage: React.FC = () => {
   const [authorities, setAuthorities] = useState<any[]>([]);
   const [selectedAuthority, setSelectedAuthority] = useState<any>(null);
   const [isSignatureSidebarOpen, setIsSignatureSidebarOpen] = useState(false);
+
+  // Currency State
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
+  const [isCurrencySidebarOpen, setIsCurrencySidebarOpen] = useState(false);
+
+  // Company Profile State
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
 
   // --- Fetching Data ---
   useEffect(() => {
@@ -88,9 +109,32 @@ const SettingsPage: React.FC = () => {
       }
     };
 
+    const fetchCurrencies = async () => {
+  try {
+    const res = await api.get("/currencies");
+    setCurrencies(res.data || []);
+  } catch (err) {
+    console.error("Error fetching currencies:", err);
+  }
+};
+
+    const fetchProfiles = async () => {
+  try {
+    const res = await api.get("/company-profiles");
+    setProfiles(res.data || []);
+  } catch (err) {
+    console.error(
+      "Error fetching company profiles:",
+      err
+    );
+  }
+};
+
     fetchBanks();
     fetchFields();
     fetchAuthorities();
+    fetchCurrencies();
+    fetchProfiles();
   }, []);
 
   // --- Handlers ---
@@ -207,6 +251,87 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+ const handleSaveCurrency = (
+  response: any,
+  isEdit?: boolean
+) => {
+  const currency = response.data || response;
+
+  if (isEdit) {
+    setCurrencies((prev) =>
+      prev.map((c) =>
+        c.id === currency.id
+          ? { ...c, ...currency }
+          : c
+      )
+    );
+  } else {
+    setCurrencies((prev) => [...prev, currency]);
+  }
+
+  setIsCurrencySidebarOpen(false);
+  setSelectedCurrency(null);
+};
+
+const handleDeleteCurrency = async (
+  id: number
+) => {
+  try {
+    await api.delete(`/currencies/${id}`);
+
+    setCurrencies((prev) =>
+      prev.filter((c) => c.id !== id)
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+const handleSaveProfile = (
+  response: any,
+  _formData?: any,
+  isEdit?: boolean
+) => {
+  const profile = response.data || response;
+
+  if (isEdit) {
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === profile.id
+          ? { ...p, ...profile }
+          : p
+      )
+    );
+  } else {
+    setProfiles((prev) => [
+      ...prev,
+      profile,
+    ]);
+  }
+
+  setIsProfileSidebarOpen(false);
+  setSelectedProfile(null);
+};
+
+
+const handleDeleteProfile = async (
+  id: number
+) => {
+  try {
+    await api.delete(
+      `/company-profiles/${id}`
+    );
+
+    setProfiles((prev) =>
+      prev.filter((p) => p.id !== id)
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
   return (
     <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen text-slate-900 font-sans">
       {/* Header */}
@@ -293,11 +418,89 @@ const SettingsPage: React.FC = () => {
                 Authorities
               </div>
             </div>
-            <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-all text-3xl">
-              ✍️
-            </div>
+            <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-all">
+  <FileSignature size={34} />
+</div>
           </div>
         </div>
+
+          {/* Currency Card */}
+
+        <div
+  onClick={() => {
+    setSelectedCurrency(null);
+    setIsCurrencySidebarOpen(true);
+  }}
+  className="cursor-pointer bg-white border border-slate-200 rounded-3xl p-8 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group"
+>
+  <div className="flex items-center justify-between">
+    <div>
+      <h2 className="text-2xl font-black text-slate-800">
+        Currency Management
+      </h2>
+
+      <p className="text-sm text-slate-400 mt-3">
+        Configure currencies available for invoicing.
+      </p>
+
+      <div className="mt-5 inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-wider">
+        {currencies.length} Currencies
+      </div>
+    </div>
+
+    <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <DollarSign size={34} />
+    </div>
+  </div>
+</div>
+    
+    {/* Company Profile Card */}
+
+    <div
+  onClick={() => {
+    setSelectedProfile(null);
+    setIsProfileSidebarOpen(true);
+  }}
+  className="
+    cursor-pointer
+    bg-white
+    border border-slate-200
+    rounded-3xl
+    p-8
+    hover:border-blue-400
+    hover:shadow-2xl
+    hover:shadow-blue-500/10
+    transition-all
+    duration-300
+    group
+  "
+>
+  <div className="flex items-center justify-between">
+
+    <div>
+
+      <h2 className="text-2xl font-black text-slate-800">
+        Company Profile
+      </h2>
+
+      <p className="text-sm text-slate-400 mt-3">
+        Configure company details used
+        in invoice headers.
+      </p>
+
+      <div className="mt-5 inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-wider">
+        {profiles.length} Profiles
+      </div>
+
+    </div>
+
+    <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <Building2 size={34} />
+    </div>
+
+  </div>
+</div>
+
       </div>
 
       {/* Banking Sidebar */}
@@ -347,6 +550,40 @@ const SettingsPage: React.FC = () => {
         onDelete={handleDeleteAuthority}
         onSave={handleSaveAuthority}
       />
+
+      {/* Currency Sidebar */}
+      <CurrencySidebar
+  visible={isCurrencySidebarOpen}
+  onHide={() => {
+    setIsCurrencySidebarOpen(false);
+    setSelectedCurrency(null);
+  }}
+  currencies={currencies}
+  initialData={selectedCurrency}
+  onSave={handleSaveCurrency}
+  onEdit={(currency) => {
+    setSelectedCurrency(currency);
+    setIsCurrencySidebarOpen(true);
+  }}
+  onDelete={handleDeleteCurrency}
+/>
+
+      {/* Company Profile Sidebar */}
+      <CompanyProfileSidebar
+  visible={isProfileSidebarOpen}
+  onHide={() => {
+    setIsProfileSidebarOpen(false);
+    setSelectedProfile(null);
+  }}
+  profiles={profiles}
+  initialData={selectedProfile}
+  onSave={handleSaveProfile}
+  onEdit={(profile) => {
+    setSelectedProfile(profile);
+    setIsProfileSidebarOpen(true);
+  }}
+  onDelete={handleDeleteProfile}
+/>
     </div>
   );
 };

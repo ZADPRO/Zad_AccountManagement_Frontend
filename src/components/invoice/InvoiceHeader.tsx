@@ -143,14 +143,20 @@ const InvoiceHeader = ({
         </label>
 
         <select
-          value={taxType}
-          onChange={(e) => onTaxTypeChange(e.target.value)}
-          className="w-full bg-white border border-slate-500 rounded-2xl p-3.5 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all appearance-none cursor-pointer shadow-sm"
-        >
-          <option value="IGST @ 18%">IGST @ 18%</option>
+  value={taxType}
+  onChange={(e) => onTaxTypeChange(e.target.value)}
+  className="w-full bg-white border border-slate-500 rounded-2xl p-3.5 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all appearance-none cursor-pointer shadow-sm"
+>
+  <option value="NO TAX">NO TAX (0%)</option>
 
-          <option value="CGST @ 9% + SGST @ 9%">CGST @ 9% + SGST @ 9%</option>
-        </select>
+  <option value="IGST @ 18%">
+    IGST @ 18%
+  </option>
+
+  <option value="CGST @ 9% + SGST @ 9%">
+    CGST @ 9% + SGST @ 9%
+  </option>
+</select>
       </div>
       {/*
  <div className="space-y-2">

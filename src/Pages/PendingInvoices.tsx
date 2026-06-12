@@ -5,6 +5,7 @@ import StatCard from '../components/ui/StatCard';
 import InvoiceListTable from '@/components/ui/invoiceTable';
 import InvoicePrint  from '@/Pages/PrintInvoice';
 import api from '@/api/api';
+import { useNavigate } from "react-router-dom";
 
 // Define a type for your Invoices
 export interface InvoiceListModel {
@@ -13,10 +14,14 @@ export interface InvoiceListModel {
   clientName: string;
   amount: number;
   dueDate: string;
-  status: 'pending' | 'overdue' | 'paid';
+  status: 'pending' | 'overdue' | 'paid' | 'draft';
+
+  isSaveDraft: boolean;
+   invoiceType?: string;
 }
 
 const PendingInvoices = () => {
+  const navigate = useNavigate();
   useAuth();
   const [invoices, setInvoices] = useState<InvoiceListModel[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -31,6 +36,8 @@ const PendingInvoices = () => {
   // ✅ NEW: Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<number | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'pending' | 'draft'>('pending');
   
   // Fetch Invoices
   useEffect(() => {
@@ -38,17 +45,31 @@ const PendingInvoices = () => {
       setIsLoading(true);
       try {
         const res = await api.get('/invoices');
-        
+
         const rawData = res.data.data || [];
+        
 
         const mappedInvoices: InvoiceListModel[] = rawData.map((inv: any) => ({
-          id: inv.invoiceid,
-          invoiceNumber: inv.invoicenumber,
-          clientName: inv.clientname,
-          amount: Number(inv.grandtotal || 0),
-          dueDate: inv.invoicedate,
-          status: inv.paymentstatus
-        }));
+  id: inv.invoiceid,
+  
+  invoiceNumber:
+  inv.invoicetype === "proforma"
+    ? "-"
+    : inv.invoicenumber,
+
+    invoiceType: inv.invoicetype,
+
+  clientName: inv.clientname,
+  amount: Number(inv.grandtotal || 0),
+  dueDate: inv.invoicedate,
+
+  status: inv.issavedraft
+    ? "draft"
+    : inv.paymentstatus,
+
+  isSaveDraft: inv.issavedraft,
+}));
+        // console.log(mappedInvoices);
 
         setInvoices(mappedInvoices);
       } catch (err) {
@@ -59,6 +80,15 @@ const PendingInvoices = () => {
     };
     fetchInvoices();
   }, [refreshKey]); 
+
+  const handleEdit = (invoice: InvoiceListModel) => {
+
+  navigate(
+    `/invoices/edit/${invoice.id}`
+  );
+
+};
+
 
   const handleView = (invoice: InvoiceListModel) => {
     setSelectedInvoiceId(invoice.id);
@@ -109,9 +139,19 @@ const PendingInvoices = () => {
   };
 
   const filteredInvoices = invoices
-  .filter(inv =>
-    inv.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+  .filter((inv) =>
+    activeTab === "draft"
+      ? inv.isSaveDraft === true
+      : inv.isSaveDraft !== true
+  )
+  .filter(
+    (inv) =>
+      inv.clientName
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      inv.invoiceNumber
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
   )
   .sort((a, b) => b.id - a.id);
 
@@ -126,7 +166,7 @@ const PendingInvoices = () => {
     <div className="p-3 space-y-8 bg-slate-50 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pending Invoices</h1>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Invoice Logs</h1>
         </div>
       </div>
 
@@ -148,6 +188,30 @@ const PendingInvoices = () => {
             icon={<AlertCircle className="text-rose-500" />} 
         />
       </div>
+
+      <div className="flex gap-2 border-b border-slate-200">
+  <button
+    onClick={() => setActiveTab("pending")}
+    className={`px-5 py-3 font-bold border-b-2 ${
+      activeTab === "pending"
+        ? "border-blue-600 text-blue-600"
+        : "border-transparent text-slate-500"
+    }`}
+  >
+    Pending Invoices
+  </button>
+
+  <button
+    onClick={() => setActiveTab("draft")}
+    className={`px-5 py-3 font-bold border-b-2 ${
+      activeTab === "draft"
+        ? "border-blue-600 text-blue-600"
+        : "border-transparent text-slate-500"
+    }`}
+  >
+    Drafts
+  </button>
+</div>
 
       {/* Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch justify-between gap-4">
@@ -171,6 +235,7 @@ const PendingInvoices = () => {
           onView={handleView}
           onPrint={handlePrint}
           onDelete={handleDelete}
+          onEdit={handleEdit}
         />
       )}
 

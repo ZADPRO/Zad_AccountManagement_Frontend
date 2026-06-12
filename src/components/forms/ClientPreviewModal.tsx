@@ -59,7 +59,7 @@ const ClientPreviewModal = ({ isOpen, onClose, clientId }: ViewClientProps) => {
     taxPercentage: data.taxPercentage ?? 0,
     isExport: data.isExport || data.isexport || false,
     // Tax Info
-    gststatus: data.gststatus || data.gstStatus || 'Registered',
+    
     gstnumber: data.gstnumber || data.gstNumber || '-',
     pan: data.pan || '-'
   } : null;
@@ -172,10 +172,7 @@ const ClientPreviewModal = ({ isOpen, onClose, clientId }: ViewClientProps) => {
                   <ReceiptIndianRupee size={14} className="text-emerald-500" /> Tax & Financials
                </h4>
                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">GST Status</label>
-                    <p className="text-sm font-bold text-slate-900">{client.gststatus}</p>
-                  </div>
+                  
                   <div className="bg-slate-50 p-4 rounded-2xl col-span-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">GST Number</label>
                     <p className="text-sm font-mono font-bold text-blue-600">{client.gstnumber}</p>
