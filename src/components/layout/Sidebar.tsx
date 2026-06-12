@@ -32,7 +32,7 @@ const Sidebar = () => {
           </nav>
           
           <nav className="space-y-1 px-4">
-            <SidebarItem icon="pi-clock" label="Pending Invoices" to="/invoices/pending" />
+            <SidebarItem icon="pi-clock" label="Invoice Logs" to="/invoices/pending" />
           </nav>        
           <nav className="space-y-1 px-4">
             <SidebarItem icon="pi-users" label="Clients" to="/recipient-master" />

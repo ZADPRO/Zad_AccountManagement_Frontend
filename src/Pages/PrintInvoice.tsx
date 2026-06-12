@@ -12,7 +12,7 @@ interface ItemCustomFieldValue {
   fieldId: number;
   label: string;
   value: string;
-}
+}   
 
 interface InvoiceItem {
   itemid: number;
@@ -20,6 +20,7 @@ interface InvoiceItem {
   quantity: number;
   unitprice: number;
   linetotal: number;
+  sacCode?: string;
   itemCustomValues?: ItemCustomFieldValue[];
 }
 
@@ -37,7 +38,7 @@ interface ClientInfo {
   zip: number;
   gstnumber: string;
   pan: string;
-  gststatus: string;
+  
   isexport: boolean;
   tax_percentage: number;
   billingAddress: string;
@@ -74,12 +75,30 @@ interface InvoiceResponse {
     bankAddress: string;
   };
   qrCodeUrl?: string;
-  
+
+  signatureUrl?: string;
   signatureAuthorityId?: number;
 signatureAuthorityName?: string;
 signatureAuthorityRole?: string;
 signatureContactNumber?: string;
 signatureEmail?: string;
+
+companyName?: string;
+addressLine1?: string;
+addressLine2?: string;
+
+city?: string;
+state?: string;
+country?: string;
+pincode?: string;
+
+gstNumber?: string;
+
+companyEmail?: string;
+companyPhone?: string;
+website?: string;
+
+companyLogoUrl?: string;
 
   
 
@@ -130,6 +149,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
     if (!invoiceId) return;
     
     const fetchInvoiceData = async () => {
+
       try {
         setLoading(true);
         const token = sessionStorage.getItem("token");
@@ -148,6 +168,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         customFieldsList.forEach((f: any) => {
           fieldLabels[f.fieldId] = f.fieldLabel;
         });
+
         
         const data = {
           ...raw,
@@ -156,6 +177,7 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
           items: (raw.items || []).map((item: any) => ({
             itemid: item.itemid ?? item.ItemID,
             description: item.description ?? item.Description,
+            sacCode: item.sacCode || item.sac_code || "",
             quantity: item.quantity ?? item.Quantity,
             unitprice: item.unitprice ?? item.UnitPrice,
             linetotal: item.linetotal ?? item.LineTotal, 
@@ -185,7 +207,34 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
             bankAddress: raw.invoiceBankAddress,
           },
           qrCodeUrl: raw.qrCodeUrl || raw.invoiceQrCodeUrl || null,
+          signatureUrl: raw.signatureUrl || raw.SignatureUrl || "",
+          signatureAuthorityName: raw.signatureAuthorityName || raw.SignatureAuthorityName || "",
+          signatureAuthorityRole: raw.signatureAuthorityRole || raw.SignatureAuthorityRole || "",
+
+          companyName: raw.companyName,
+addressLine1: raw.addressLine1,
+addressLine2: raw.addressLine2,
+
+city: raw.city,
+state: raw.state,
+country: raw.country,
+pincode: raw.pincode,
+
+gstNumber: raw.gstNumber,
+
+companyEmail: raw.companyEmail,
+companyPhone: raw.companyPhone,
+website: raw.website,
+
+companyLogoUrl: raw.companyLogoUrl,
+          
         };
+        
+        // console.log("SIGNATURE URL =", raw.signatureUrl);
+// console.log("SIGNATURE NAME =", raw.signatureAuthorityName);
+// console.log("FULL DATA =", raw);
+// console.log("RAW ITEMS =", raw.items);
+// console.log("MAPPED ITEMS =", data.items);
 
         setInvoice(data); 
       } catch (err: any) {
@@ -366,23 +415,61 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         <div className="inv-header" style={{ display:"flex", borderBottom:"2px solid #4A90D9" }}>
           <div className="inv-company" style={{ flex:1, padding:"12px 14px" }}>
             <h2 style={{ color:"#4A90D9", fontSize:14, fontWeight:"bold", marginBottom:4 }}>
-              ZAdroit IT Solutions Private Limited
-            </h2>
-            <p style={{ fontSize:11, lineHeight:1.5 }}>
-              38/37b, No.1 Logi Street, Gugai,<br/>
-              Salem - 636006, Tamilnadu, INDIA<br/>
-              GST Reg Number : 33AACCZ1874E1ZE<br/>
-              Email: finance@zadroit.com<br/>
-              Phone No : 0427-3562462, 8838638407<br/>
-              Www.zadroit.com, http://max-idigital.com
-            </p>
+  {invoice.companyName}
+</h2>
+
+<p style={{ fontSize:11, lineHeight:1.5 }}>
+  {invoice.addressLine1}<br/>
+
+  {invoice.addressLine2 && (
+    <>
+      {invoice.addressLine2}
+      <br/>
+    </>
+  )}
+
+  {invoice.city} - {invoice.pincode}, {invoice.state}, {invoice.country}
+  <br/>
+
+  {invoice.gstNumber && (
+    <>
+      GST Reg Number : {invoice.gstNumber}
+      <br/>
+    </>
+  )}
+
+  Email: {invoice.companyEmail}
+  <br/>
+
+  Phone No : {invoice.companyPhone}
+  <br/>
+
+  {invoice.website}
+</p>
           </div>
-          <div style={{ width: 160, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 }}>
-            <img 
-              src="/LOGO.PNG" 
-              style={{ width: "100%", height: "auto", maxWidth: "140px", objectFit: "contain" }} 
-            />
-          </div>
+          {invoice.companyLogoUrl ? (
+  <img
+    src={invoice.companyLogoUrl}
+    alt="Company Logo"
+    style={{
+      width: "100%",
+      height: "auto",
+      maxWidth: "140px",
+      objectFit: "contain"
+    }}
+  />
+) : (
+  <img
+    src="/LOGO.PNG"
+    alt="Default Logo"
+    style={{
+      width: "100%",
+      height: "auto",
+      maxWidth: "140px",
+      objectFit: "contain"
+    }}
+  />
+)}
         </div>
 
         {/* Title */}
@@ -421,20 +508,74 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         <table style={{ width: "100%", borderCollapse: "collapse", borderTop: "1px solid #4A90D9", borderBottom: "1px solid black" }}>
           <thead>
             <tr style={{ background: "#4A90D9", color: "white" }}>
-              <th style={{ padding: "7px 10px", textAlign: "center", width: 36, border: "1px solid black" }}>#</th>
+              <th
+  style={{
+    padding: "6px 10px",
+    textAlign: "center",
+    width: 36,
+    border: "1px solid black",
+    fontSize: "13px",
+    fontWeight: "600"
+  }}
+>
+  #
+</th>
               
               {/* colSpan={2} secretly splits this column so the footer can align properly */}
-              <th colSpan={2} style={{ padding: "7px 10px", textAlign: "left", border: "1px solid black" }}>Item &amp; Description</th>
+              <th
+  style={{
+    padding: "6px 10px",
+    textAlign: "left",
+    border: "1px solid black",
+    fontSize: "13px",
+    fontWeight: "600"
+  }}
+>
+  Description
+</th>
+
+<th
+  style={{
+    padding: "6px 10px",
+    textAlign: "left",
+    border: "1px solid black",
+    fontSize: "13px",
+    fontWeight: "600"
+  }}
+>
+  SAC Code
+</th>
+
               
               {/* Dynamic Custom Columns */}
-              {invoice.customValues?.map((field) => (
-                <th key={field.fieldId} style={{ padding: "7px 10px", textAlign: "left", border: "1px solid black" }}>
-                  {field.label}
-                </th>
-              ))}
+{invoice.customValues?.map((field) => (
+  <th
+    key={field.fieldId}
+    style={{
+      padding: "6px 10px",
+      textAlign: "left",
+      border: "1px solid black",
+      fontSize: "13px",
+      fontWeight: "600"
+    }}
+  >
+    {field.label}
+  </th>
+))}
 
               {/* ✨ Added width: 130px here to anchor the right side of the table */}
-              <th style={{ width: "130px", padding: "7px 10px", textAlign: "right", border: "1px solid black" }}>Amount ({invoice.currency})</th>
+              <th
+  style={{
+    width: "130px",
+    padding: "6px 10px",
+    textAlign: "right",
+    border: "1px solid black",
+    fontSize: "13px",
+    fontWeight: "600"
+  }}
+>
+  Amount ({invoice.currency})
+</th>
             </tr>
           </thead>
           
@@ -444,14 +585,30 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
                 <td style={{ padding: "10px", textAlign: "center", color: "#555", border: "1px solid black" }}>{i + 1}</td>
                 
                 {/* colSpan={2} here matches the header split */}
-                <td colSpan={2} style={{ padding: "10px", fontSize: 12, border: "1px solid black" }}>
-                  {item.description}
+                <td 
+  style={{
+    padding: "10px",
+    fontSize: 12,
+    border: "1px solid black"
+  }}
+>
+  {item.description}
                   {item.quantity > 1 && (
                     <span style={{ color: "#888", fontSize: 11 }}>
                       <br/>(Qty: {item.quantity} × {fmt(item.unitprice)})
                     </span>
                   )}
                 </td>
+
+                <td
+  style={{
+    padding: "10px",
+    fontSize: 12,
+    border: "1px solid black"
+  }}
+>
+  {item.sacCode || "-"}
+</td>
 
                 {/* Dynamic Custom Cells */}
                 {invoice.customValues?.map((field) => (
@@ -552,9 +709,16 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
             )}
           </div>
           <div style={{ width:175, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:10, gap:8 }}>
-            <div style={{ fontSize:10, textAlign:"center", color:"#4A90D9", fontWeight:"bold", lineHeight:1.3 }}>
-              M/S.ZADROIT IT SOLUTIONS PRIVATE LIMITED
-            </div>
+            <div
+  style={{
+    fontSize:10,
+    textAlign:"center",
+    color:"#4A90D9",
+    fontWeight:"bold"
+  }}
+>
+  M/S. {invoice.companyName}
+</div>
             {invoice.qrCodeUrl ? (
               <img src={invoice.qrCodeUrl} width={90} height={90} alt="QR Code" />
             ) : null}
@@ -563,17 +727,29 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         </div>
 
         {/* Signature Section */}
-        <div style={{ borderTop: "2px solid #4A90D9", padding: "10px 14px", minHeight: 140, display: "flex", flexDirection: "column", justifyContent: "space-between", fontSize: 12, fontWeight: "bold" }}>
-          <div>For ZADROIT IT SOLUTIONS PRIVATE LIMITED</div>
-          <div>
-            <div style={{ marginTop: 60 }}>
-              <div style={{ fontWeight: "bold", fontSize: 13 }}>{invoice.signatureAuthorityName}</div>
-              <div style={{ fontSize: 12, marginTop: 4 }}>{invoice.signatureAuthorityRole}</div>
-            </div>
-            <div style={{ marginTop: 6 }}>AUTHORISED SIGNATORY</div>
-          </div>
-        </div>
-
+<div style={{ borderTop: "2px solid #4A90D9", padding: "10px 14px" }}>
+  <div>
+  For {invoice.companyName}
+</div>
+  
+  <div style={{ marginTop: 10 }}>
+    {/* Check if signatureUrl exists and render it */}
+   {invoice.signatureUrl && (
+  <img
+    src={invoice.signatureUrl}
+    alt="Signature"
+    style={{
+      maxHeight: "50px",
+      objectFit: "contain"
+    }}
+  />
+)}
+    
+    <div style={{ fontWeight: "bold", fontSize: 13 }}>{invoice.signatureAuthorityName}</div>
+    <div style={{ fontSize: 12 }}>{invoice.signatureAuthorityRole}</div>
+    <div style={{ fontSize: 12, fontWeight: "bold" }}>AUTHORISED SIGNATORY</div>
+  </div>
+</div>
       </div>
     </div>
   );

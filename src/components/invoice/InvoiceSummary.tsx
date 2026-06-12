@@ -23,9 +23,11 @@ const InvoiceSummary = ({
 }: InvoiceSummaryProps) => {
 
   const gstAmount =
-    taxType === "IGST @ 18%"
-      ? igstAmount
-      : cgstAmount + sgstAmount;
+  taxType === "NO TAX"
+    ? 0
+    : taxType === "IGST @ 18%"
+    ? igstAmount
+    : cgstAmount + sgstAmount;
 
   
 
@@ -74,51 +76,46 @@ const InvoiceSummary = ({
           </div>
 
           {/* GST SECTION */}
-          {taxType === "IGST @ 18%" ? (
+          {taxType === "NO TAX" ? null : taxType === "IGST @ 18%" ? (
 
-            <div className="flex justify-between items-center text-sm">
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-slate-500 font-medium">
+      IGST (18%)
+    </span>
 
-              <span className="text-slate-500 font-medium">
-                IGST (18%)
-              </span>
+    <span className="font-bold text-emerald-600">
+      + {currencySymbol}
+      {igstAmount.toLocaleString()}
+    </span>
+  </div>
 
-              <span className="font-bold text-emerald-600">
-                + {currencySymbol}
-                {igstAmount.toLocaleString()}
-              </span>
+) : (
 
-            </div>
+  <>
+    <div className="flex justify-between items-center text-sm">
+      <span className="text-slate-500 font-medium">
+        CGST (9%)
+      </span>
 
-          ) : (
+      <span className="font-bold text-emerald-600">
+        + {currencySymbol}
+        {cgstAmount.toLocaleString()}
+      </span>
+    </div>
 
-            <>
-              <div className="flex justify-between items-center text-sm">
+    <div className="flex justify-between items-center text-sm">
+      <span className="text-slate-500 font-medium">
+        SGST (9%)
+      </span>
 
-                <span className="text-slate-500 font-medium">
-                  CGST (9%)
-                </span>
+      <span className="font-bold text-emerald-600">
+        + {currencySymbol}
+        {sgstAmount.toLocaleString()}
+      </span>
+    </div>
+  </>
 
-                <span className="font-bold text-emerald-600">
-                  + {currencySymbol}
-                  {cgstAmount.toLocaleString()}
-                </span>
-
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-
-                <span className="text-slate-500 font-medium">
-                  SGST (9%)
-                </span>
-
-                <span className="font-bold text-emerald-600">
-                  + {currencySymbol}
-                  {sgstAmount.toLocaleString()}
-                </span>
-
-              </div>
-            </>
-          )}
+)}
 
           {/*  ADJUSTMENT ROW (Only visible if adjustment is not 0) */}
           {Math.abs(adjustment) > 0.001 && (

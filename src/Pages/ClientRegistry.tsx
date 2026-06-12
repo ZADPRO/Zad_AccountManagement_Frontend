@@ -8,10 +8,14 @@ import ClientPreviewModal from '@/components/forms/ClientPreviewModal'; // New C
 import { type ClientListModel } from '../types/clients'; 
 import api from '@/api/api';
 import { Button } from 'primereact/button';
+import { Toast } from "primereact/toast";
+import { useRef } from "react";
+
 const RecipientMaster = () => {
   // const { userRole } = useAuth();
   const [clients, setClients] = useState<ClientListModel[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const toast = useRef<Toast>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Separate States for Two Different UI Elements
@@ -74,12 +78,29 @@ const handleSave = async (clientData: any) => {
 
       // 3. Axios considers 200-299 status codes as successful
       if (res.status === 200 || res.status === 201) {
-        setRefreshKey(prev => prev + 1);
-        handleCloseAll();
-      }
+
+  toast.current?.show({
+    severity: "success",
+    summary: "Success",
+    detail: isEdit
+      ? "Client updated successfully"
+      : "Client added successfully",
+    life: 3000,
+  });
+
+  setRefreshKey(prev => prev + 1);
+  handleCloseAll();
+}
     } catch (err: any) {
       // 4. Enhanced error logging with Axios
-      console.error("Save client failed:", err.response?.data?.message || err.message);
+      toast.current?.show({
+  severity: "error",
+  summary: "Failed",
+  detail:
+    err.response?.data?.message ||
+    "Unable to save client",
+  life: 4000,
+});
     }
   };
 const triggerDelete = (client: ClientListModel) => {
@@ -95,12 +116,27 @@ const confirmDeleteAction = async () => {
     });
 
     if (res.status === 200 || res.status === 204) {
-      setRefreshKey(prev => prev + 1);
-      setIsDeleteOpen(false);
-      setClientToDelete(null);
-    }
+
+  toast.current?.show({
+    severity: "success",
+    summary: "Deleted",
+    detail: "Client deleted successfully",
+    life: 3000,
+  });
+
+  setRefreshKey(prev => prev + 1);
+  setIsDeleteOpen(false);
+  setClientToDelete(null);
+}
   } catch (err: any) {
-    console.error("Delete failed:", err.response?.data?.message || err.message);
+    toast.current?.show({
+  severity: "error",
+  summary: "Delete Failed",
+  detail:
+    err.response?.data?.message ||
+    "Unable to delete client",
+  life: 4000,
+});
   }
 };
 
@@ -111,6 +147,9 @@ const confirmDeleteAction = async () => {
 
   return (
     <div className="space-y-8 bg-slate-50 min-h-screen">
+      
+      <Toast ref={toast} position="top-right" />
+
       <header className='p-3'>
           <h1 className="text-3xl font-black tracking-tighter text-slate-900">Client Management</h1>
       </header>

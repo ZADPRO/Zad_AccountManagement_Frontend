@@ -8,10 +8,10 @@ import { Dropdown } from "primereact/dropdown";
 import {
   Landmark,
   X,
-  Check,
   UploadCloud,
   FileImage,
   Edit2,
+  Check,
   Trash2,
 } from "lucide-react";
 import api from "@/api/api";
@@ -277,7 +277,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
 
           {/* --- SCROLLABLE CONTENT AREA --- */}
           <div className="flex-1 overflow-y-auto px-8 custom-scrollbar min-h-0 bg-white">
-            <div className="space-y-7 pb-12 mt-8">
+            <div className="space-y-5 pb-4 mt-4">
               {/* Bank Name Field */}
               <div className="group space-y-2">
                 <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1 group-focus-within:text-blue-600 transition-colors">
@@ -435,8 +435,61 @@ const BankDetailsSidebar: React.FC<Props> = ({
               </div>
             </div>
 
+             {/* --- STICKY FOOTER --- */}
+          <div className="px-0 py-4 border-t border-slate-100 flex justify-end gap-3 bg-white">
+            <button
+  onClick={onHide}
+  className="
+    w-32
+    h-11
+    rounded-xl
+    text-xs
+    font-black
+    uppercase
+    tracking-widest
+    text-slate-400
+    hover:bg-slate-50
+    transition-all
+  "
+>
+  Cancel
+</button>
+
+           <button
+  onClick={handleSave}
+  disabled={loading}
+  className="
+    w-64
+    h-11
+    bg-blue-600
+    hover:bg-blue-700
+    text-white
+    rounded-xl
+    text-xs
+    font-black
+    uppercase
+    tracking-[0.15em]
+    flex
+    items-center
+    justify-center
+    gap-2
+    transition-all
+    disabled:opacity-50
+  "
+>
+  {loading ? (
+    "Processing..."
+  ) : (
+    <>
+      <Check size={18} strokeWidth={3} />
+      {isEdit ? "Update Account" : "Save Account"}
+    </>
+  )}
+</button>
+          </div>
+
             {/* Existing Accounts Table */}
-            <div className="border-t border-slate-100 pt-8 mt-8 pb-12">
+            <div className="border-t border-slate-100 pt-3 mt-3">
               <div className="flex items-center justify-between mb-4 px-2">
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                   Existing Accounts
@@ -446,7 +499,17 @@ const BankDetailsSidebar: React.FC<Props> = ({
                 </span>
               </div>
 
-              <div className="overflow-hidden rounded-3xl border border-slate-200">
+              <div
+  className="
+    rounded-3xl
+    border
+    border-slate-200
+    px-6
+    max-h-[320px]
+    overflow-y-auto
+    custom-scrollbar
+  "
+>
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
@@ -534,32 +597,7 @@ const BankDetailsSidebar: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* --- STICKY FOOTER --- */}
-          <div className="px-8 py-6 border-t border-slate-100 flex gap-4 shrink-0 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
-            <button
-              onClick={onHide}
-              className="flex-1 h-14 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all active:scale-95"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleSave}
-              disabled={loading}
-              className="flex-2 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                <>
-                  <Check size={18} strokeWidth={3} /> Save Account
-                </>
-              )}
-            </button>
-          </div>
+         
         </div>
       </Sidebar>
     </>

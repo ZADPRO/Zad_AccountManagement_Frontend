@@ -2,22 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 
 import { Sidebar } from "primereact/sidebar";
 import { InputText } from "primereact/inputtext";
-import {
-  
-  confirmDialog,
-} from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { UploadCloud } from "lucide-react";
+import { Building2, UploadCloud } from "lucide-react";
 
 import {
   X,
   Check,
   Edit2,
   Trash2,
-  ShieldCheck,
 } from "lucide-react";
 
 import api from "@/api/api";
+
+
 
 interface Props {
   visible: boolean;
@@ -32,19 +30,19 @@ interface Props {
 
   initialData?: any;
 
-  authorities: any[];
+  profiles: any[];
 
-  onEdit: (authority: any) => void;
+  onEdit: (profile: any) => void;
 
   onDelete: (id: number) => void;
 }
 
-const SigningAuthoritySidebar: React.FC<Props> = ({
+const CompanyProfileSidebar: React.FC<Props> = ({
   visible,
   onHide,
   onSave,
   initialData,
-  authorities,
+  profiles,
   onEdit,
   onDelete,
 }) => {
@@ -54,56 +52,108 @@ const SigningAuthoritySidebar: React.FC<Props> = ({
 
   const isEdit = !!initialData;
 
-  const [signaturePreview, setSignaturePreview] = useState("");
+  const [logoPreview, setLogoPreview] =useState("");
 
 const [formData, setFormData] = useState({
-  name: "",
-  designation: "",
-  contactNumber: "",
+  companyName: "",
+
+  addressLine1: "",
+  addressLine2: "",
+
+  city: "",
+  state: "",
+  country: "",
+  pincode: "",
+
+  gstNumber: "",
+
   email: "",
-  signatureUrl: "",
+  phoneNumber: "",
+  website: "",
+
+  logoUrl: "",
 });
 
   useEffect(() => {
   if (initialData) {
     setFormData({
-      name: initialData.name || "",
-      designation: initialData.designation || "",
-      contactNumber: initialData.contactNumber || "",
+      companyName: initialData.companyName || "",
+      addressLine1: initialData.addressLine1 || "",
+      addressLine2: initialData.addressLine2 || "",
+      city: initialData.city || "",
+      state: initialData.state || "",
+      country: initialData.country || "",
+      pincode: initialData.pincode || "",
+      gstNumber: initialData.gstNumber || "",
       email: initialData.email || "",
-      signatureUrl: initialData.signatureUrl || "",
+      phoneNumber: initialData.phoneNumber || "",
+      website: initialData.website || "",
+      logoUrl: initialData.logoUrl || "",
     });
 
-    setSignaturePreview(
-      initialData.signatureUrl || ""
+    setLogoPreview(
+      initialData.logoUrl || ""
     );
 
   } else if (visible) {
     setFormData({
-      name: "",
-      designation: "",
-      contactNumber: "",
+      companyName: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      country: "",
+      pincode: "",
+      gstNumber: "",
       email: "",
-      signatureUrl: "",
+      phoneNumber: "",
+      website: "",
+      logoUrl: "",
     });
 
-    setSignaturePreview(""); //Clear old image
+    setLogoPreview(""); //Clear old image
   }
 }, [initialData, visible]);
 
-  const handleSignatureUpload = (file: File | undefined) => {
+  const handleLogoUpload = (file: File | undefined) => {
   if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.current?.show({
+      severity: "warn",
+      summary: "Validation",
+      detail: "Logo size should be less than 2MB",
+      life: 3000,
+    });
+    return;
+  }
+
+  const allowedTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    toast.current?.show({
+      severity: "warn",
+      summary: "Validation",
+      detail: "Only PNG/JPG files are allowed",
+      life: 3000,
+    });
+    return;
+  }
 
   const reader = new FileReader();
 
   reader.onloadend = () => {
     const base64 = reader.result as string;
 
-    setSignaturePreview(base64);
+    setLogoPreview(base64);
 
     setFormData((prev) => ({
       ...prev,
-      signatureUrl: base64,
+      logoUrl: base64,
     }));
   };
 
@@ -112,85 +162,70 @@ const [formData, setFormData] = useState({
 
   const handleSave = async () => {
     // NAME
-if (!formData.name.trim()) {
-
+if (!formData.companyName.trim()) {
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Authority name is required",
+    detail: "Company name is required",
     life: 3000,
   });
-
   return;
 }
 
 // DESIGNATION
-if (!formData.designation.trim()) {
-
+if (!formData.country.trim()) {
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Role in organization is required",
+    detail: "Country is required",
     life: 3000,
   });
-
   return;
 }
 
 // CONTACT NUMBER
-if (!formData.contactNumber.trim()) {
-
+if (!formData.state.trim()) {
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Contact number is required",
+    detail: "State is required",
     life: 3000,
   });
-
   return;
 }
 
 // ONLY NUMBERS
-const phoneRegex = /^[0-9]+$/;
-
-if (!phoneRegex.test(formData.contactNumber)) {
-
+if (!formData.city.trim()) {
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Contact number must contain only numbers",
+    detail: "City is required",
     life: 3000,
   });
-
   return;
 }
 
 // LENGTH CHECK
-if (formData.contactNumber.length !== 10) {
-
+if (!formData.pincode.trim()) {
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Contact number must be 10 digits",
+    detail: "Pincode is required",
     life: 3000,
   });
-
   return;
 }
 
 // EMAIL
 if (!formData.email.trim()) {
-
   toast.current?.show({
     severity: "warn",
     summary: "Validation",
-    detail: "Email address is required",
+    detail: "Email is required",
     life: 3000,
   });
-
   return;
 }
-
 // EMAIL FORMAT
 const emailRegex =
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -207,16 +242,71 @@ if (!emailRegex.test(formData.email)) {
   return;
 }
 
+if (!formData.phoneNumber.trim()) {
+  toast.current?.show({
+    severity: "warn",
+    summary: "Validation",
+    detail: "Phone number is required",
+    life: 3000,
+  });
+  return;
+}
+
+if (!formData.website.trim()) {
+  toast.current?.show({
+    severity: "warn",
+    summary: "Validation",
+    detail: "Website is required",
+    life: 3000,
+  });
+  return;
+}
+
+if (!/^\d{6}$/.test(formData.pincode)) {
+  toast.current?.show({
+    severity: "warn",
+    summary: "Validation",
+    detail: "Pincode must be 6 digits",
+    life: 3000,
+  });
+  return;
+}
+
+const websiteRegex =
+  /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
+
+if (!websiteRegex.test(formData.website)) {
+  toast.current?.show({
+    severity: "warn",
+    summary: "Validation",
+    detail: "Enter a valid website URL",
+    life: 3000,
+  });
+  return;
+}
+
+
 
 
   const payload = {
-  name: formData.name,
-  designation: formData.designation,
-  contactNumber: formData.contactNumber,
-  email: formData.email,
-  signatureUrl: formData.signatureUrl,
-};  
+  companyName: formData.companyName,
 
+  addressLine1: formData.addressLine1,
+  addressLine2: formData.addressLine2,
+
+  city: formData.city,
+  state: formData.state,
+  country: formData.country,
+  pincode: formData.pincode,
+
+  gstNumber: formData.gstNumber,
+
+  email: formData.email,
+  phoneNumber: formData.phoneNumber,
+  website: formData.website,
+
+  logoUrl: formData.logoUrl,
+};
   setLoading(true);
 
     try {
@@ -224,12 +314,12 @@ if (!emailRegex.test(formData.email)) {
 
       if (isEdit) {
         res = await api.put(
-  `/signature-authorities/${initialData.id}`,
+  `/company-profiles/${initialData.id}`,
   payload
 );
       } else {
         res = await api.post(
-          "/signature-authorities",
+          "/company-profiles",
           payload
         );
       }
@@ -247,13 +337,13 @@ onSave(
         severity: "success",
         summary: "Success",
         detail: isEdit
-          ? "Authority updated successfully"
-          : "Authority created successfully",
+          ? "Company profile updated successfully"
+          : "Company profile created successfully",
         life: 3000,
       });
 
       onHide();
-      setSignaturePreview("");
+      setLogoPreview("");
 
     } catch (err: any) {
       console.error(err);
@@ -303,7 +393,7 @@ onSave(
                   shadow-lg shadow-blue-200
                 "
               >
-                <ShieldCheck size={24} strokeWidth={2.5} />
+                <Building2 size={24} strokeWidth={2.5} />
               </div>
 
               <div>
@@ -317,8 +407,8 @@ onSave(
                   "
                 >
                   {isEdit
-                    ? "Edit Signing Authority"
-                    : "New Signing Authority"}
+                    ? "Edit Company Profile"
+                    : "New Company Profile"}
                 </h2>
 
                 <p
@@ -331,7 +421,7 @@ onSave(
                     mt-0.5
                   "
                 >
-                  Invoice Authorization
+                  Invoice Header Configuration
                 </p>
               </div>
             </div>
@@ -362,7 +452,7 @@ onSave(
             "
           >
 
-            {/* NAME */}
+            {/*COMPANY NAME */}
             <div className="space-y-2">
 
               <label
@@ -375,18 +465,18 @@ onSave(
                   ml-1
                 "
               >
-                Authority Name
+                Company Name *
               </label>
 
               <InputText
-                value={formData.name}
+                value={formData.companyName}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    name: e.target.value,
+                    companyName: e.target.value,
                   })
                 }
-                placeholder="e.g. John Doe"
+                placeholder="e.g. ZAdroit IT Solutions"
                 className="
                   w-full
                   h-14
@@ -404,7 +494,7 @@ onSave(
               />
             </div>
 
-            {/* DESIGNATION */}
+            {/* ADDRESS LINE 1 */}
             <div className="space-y-2">
 
               <label
@@ -417,18 +507,18 @@ onSave(
                   ml-1
                 "
               >
-                Role In Organization
+                Address Line 1 
               </label>
 
               <InputText
-                value={formData.designation}
+                value={formData.addressLine1}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    designation: e.target.value,
+                    addressLine1: e.target.value,
                   })
                 }
-                placeholder="e.g. Finance Manager"
+                placeholder="e.g. 123 Main Street"
                 className="
                   w-full
                   h-14
@@ -446,7 +536,7 @@ onSave(
               />
             </div>
 
-            {/* CONTACT */}
+            {/* ADDRESS LINE 2 */}
             <div className="space-y-2">
 
               <label
@@ -459,18 +549,18 @@ onSave(
                   ml-1
                 "
               >
-                Contact Number
+                Address Line 2 
               </label>
 
               <InputText
-                value={formData.contactNumber}
+                value={formData.addressLine2}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    contactNumber: e.target.value,
+                    addressLine2: e.target.value,
                   })
                 }
-                placeholder="e.g. 9876543210"
+                placeholder="e.g. Apt 4B"
                 className="
                   w-full
                   h-14
@@ -488,7 +578,45 @@ onSave(
               />
             </div>
 
-            {/* EMAIL */}
+            {/* COUNTRY */}
+            <div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    Country *
+  </label>
+
+  <InputText
+    value={formData.country}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        country: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+
+{/* STATE */}
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    State *
+  </label>
+
+  <InputText
+    value={formData.state}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        state: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+            {/* CITY */}
             <div className="space-y-2">
 
               <label
@@ -501,18 +629,18 @@ onSave(
                   ml-1
                 "
               >
-                Email Address
+                City *
               </label>
 
               <InputText
-                value={formData.email}
+                value={formData.city}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    email: e.target.value,
+                    city: e.target.value,
                   })
                 }
-                placeholder="e.g. john@company.com"
+                placeholder="e.g. Chennai"
                 className="
                   w-full
                   h-14
@@ -529,6 +657,115 @@ onSave(
                 "
               />
             </div>
+
+            
+
+
+{/* PIN CODE */}
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    Pincode *
+  </label>
+
+  <InputText
+  value={formData.pincode}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        pincode: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+
+{/* EMAIL */}
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    Email *
+  </label>
+
+  <InputText
+    value={formData.email}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        email: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+{/* PHONE */}
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    Phone Number *
+  </label>
+
+  <InputText
+  value={formData.phoneNumber}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        phoneNumber: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+
+{/* WEBSITE */}
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    Website *
+  </label>
+
+  <InputText
+    value={formData.website}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        website: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+
+
+{/* GST No */}
+
+
+<div className="space-y-2">
+  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 ml-1">
+    GST Number
+  </label>
+
+  <InputText
+    value={formData.gstNumber}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        gstNumber: e.target.value,
+      })
+    }
+    className="w-full h-14 px-5 rounded-2xl"
+  />
+</div>
+
+
+
+
+{/* LOGO */}
+
 
             <div className="space-y-3">
   <label
@@ -541,21 +778,21 @@ onSave(
       ml-1
     "
   >
-    Signature
+    Logo
   </label>
 
   <input
     type="file"
     accept="image/png,image/jpeg,image/jpg"
-    id="signature-upload"
+    id="logo-upload"
     className="hidden"
     onChange={(e) =>
-      handleSignatureUpload(e.target.files?.[0])
+      handleLogoUpload(e.target.files?.[0])
     }
   />
 
   <label
-    htmlFor="signature-upload"
+    htmlFor="logo-upload"
     className="
       w-full
       h-36
@@ -579,7 +816,7 @@ onSave(
 
     <div className="text-center">
       <p className="text-sm font-bold text-slate-700">
-        Upload Signature
+        Upload Logo
       </p>
 
       <p className="text-[11px] text-slate-400 mt-1">
@@ -588,25 +825,25 @@ onSave(
     </div>
   </label>
 
-  {signaturePreview && (
+  {logoPreview && (
   <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
     
     <div className="flex items-start justify-between">
       
       <img
-        src={signaturePreview}
-        alt="Signature Preview"
+        src={logoPreview}
+        alt="Logo Preview"
         className="h-24 object-contain bg-white rounded-xl border"
       />
 
       <button
         type="button"
         onClick={() => {
-          setSignaturePreview("");
+          setLogoPreview("");
 
           setFormData((prev) => ({
             ...prev,
-            signatureUrl: "",
+            logoUrl: "",
           }));
         }}
         className="
@@ -651,7 +888,7 @@ onSave(
 
   <button
     onClick={handleSave}
-    disabled={loading || !formData.name}
+    disabled={loading || !formData.companyName}
     className="
       w-64
       h-11
@@ -676,7 +913,7 @@ onSave(
     ) : (
       <>
         <Check size={18} strokeWidth={3} />
-        {isEdit ? "Update Authority" : "Save Authority"}
+        {isEdit ? "Update Company Profile" : "Save Company Profile"}
       </>
     )}
   </button>
@@ -701,7 +938,7 @@ onSave(
                     text-slate-400
                   "
                 >
-                  Existing Authorities
+                  Existing profiles
                 </h3>
 
                 <span
@@ -711,7 +948,7 @@ onSave(
                     text-slate-400
                   "
                 >
-                  {authorities.length} Total
+                  {profiles.length} Total
                 </span>
               </div>
 
@@ -743,7 +980,7 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Name
+                        Company
                       </th>
 
                       <th
@@ -757,7 +994,7 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Role
+                        Email
                       </th>
 
                       <th
@@ -771,8 +1008,22 @@ onSave(
                           text-slate-400
                         "
                       >
-                        Contact
+                        Phone
                       </th>
+
+                      <th
+  className="
+    text-left
+    px-4 py-3
+    text-[10px]
+    font-black
+    uppercase
+    tracking-widest
+    text-slate-400
+  "
+>
+  Website
+</th>
 
                       <th
                         className="
@@ -792,10 +1043,10 @@ onSave(
 
                   <tbody>
 
-                    {authorities.map((authority) => (
+                    {profiles.map((profile) => (
 
                       <tr
-                        key={authority.id}
+                        key={profile.id}
                         className="
                           border-b
                           border-slate-100
@@ -806,58 +1057,27 @@ onSave(
                       >
 
                         <td className="px-4 py-4">
-
-                          <p
-                            className="
-                              font-bold
-                              text-sm
-                              text-slate-800
-                            "
-                          >
-                            {authority.name}
-                          </p>
-
-                          <p
-                            className="
-                              text-xs
-                              text-slate-400
-                              mt-1
-                            "
-                          >
-                            {authority.email}
-                          </p>
-                        </td>
+  <p className="font-bold text-sm text-slate-800">
+    {profile.companyName}
+  </p>
+</td>
+                        <td className="px-4 py-4">
+  <p className="text-sm font-medium text-slate-700">
+    {profile.email}
+  </p>
+</td>
 
                         <td className="px-4 py-4">
+  <p className="text-sm font-medium text-slate-700">
+    {profile.phoneNumber}
+  </p>
+</td>
 
-                          <span
-                            className="
-                              px-3 py-1
-                              rounded-full
-                              bg-slate-100
-                              text-slate-600
-                              text-[10px]
-                              font-black
-                              uppercase
-                              tracking-wider
-                            "
-                          >
-                            {authority.designation}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4">
-
-                          <p
-                            className="
-                              text-sm
-                              font-bold
-                              text-slate-700
-                            "
-                          >
-                            {authority.contactNumber}
-                          </p>
-                        </td>
+<td className="px-4 py-4">
+  <p className="text-sm font-medium text-slate-700">
+    {profile.website}
+  </p>
+</td>
 
                         <td className="px-4 py-4">
 
@@ -872,7 +1092,7 @@ onSave(
 
                             <button
                               onClick={() =>
-                                onEdit(authority)
+                                onEdit(profile)
                               }
                               className="
                                 p-2
@@ -889,7 +1109,7 @@ onSave(
                               onClick={() => {
                                 confirmDialog({
                                   message:
-                                    "Are you sure you want to delete this authority?",
+                                    "Are you sure you want to delete this company profile?",
 
                                   header:
                                     "Delete Confirmation",
@@ -901,7 +1121,7 @@ onSave(
                                     "p-button-danger",
 
                                   accept: () => {
-                                    onDelete(authority.id);
+                                    onDelete(profile.id);
                                   },
 
                                   reject: () => {},
@@ -944,4 +1164,4 @@ onSave(
   );
 };
 
-export default SigningAuthoritySidebar;
+export default CompanyProfileSidebar;
