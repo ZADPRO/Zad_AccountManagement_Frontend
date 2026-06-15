@@ -117,8 +117,8 @@ export default function InvoicePreview({
   // ✅ Change this to 2 to account for the new split column!
   const leftColSpan = 2 + (previewData.customValues?.length || 0);
 
-  console.log("PREVIEW DATA =", previewData);
-console.log("PREVIEW CLIENT =", previewData.client);
+  // // console.log("PREVIEW DATA =", previewData);
+  // // console.log("PREVIEW CLIENT =", previewData.client);
   
 
   return (
@@ -281,41 +281,65 @@ console.log("PREVIEW CLIENT =", previewData.client);
         </div>
 
         {/* Items Table & Totals Grid */}
-        <table style={{ width: "100%", borderCollapse: "collapse", borderTop: "1px solid #4A90D9", borderBottom: "1px solid black" }}>
+        <table
+  style={{
+    width: "100%",
+    borderCollapse: "collapse",
+    tableLayout: "fixed",
+    borderTop: "1px solid #4A90D9",
+    borderBottom: "1px solid black"
+  }}
+>
           <thead>
             <tr style={{ background: "#4A90D9", color: "white" }}>
-              <th style={{ padding: "7px 10px", textAlign: "center", width: 36, border: "1px solid black" }}>#</th>
+              <th style={{
+  padding: "6px 10px",
+  textAlign: "left",
+  border: "1px solid black",
+  fontSize: "13px",
+  fontWeight: "600"
+}}>#</th>
               
               {/* colSpan={2} secretly splits this column so the footer can align properly */}
               <th
   style={{
-    padding: "7px 10px",
-    textAlign: "left",
-    border: "1px solid black",
-  }}
+  padding: "6px 10px",
+  textAlign: "left",
+  border: "1px solid black",
+  fontSize: "13px",
+  fontWeight: "600"
+}}
 >
   Description
 </th>
 
 <th
   style={{
-    padding: "7px 10px",
-    textAlign: "left",
-    border: "1px solid black",
-  }}
+  padding: "6px 10px",
+  textAlign: "left",
+  border: "1px solid black",
+  fontSize: "13px",
+  fontWeight: "600"
+}}
 >
   SAC Code
 </th>
               
               {/* Dynamic Custom Columns */}
               {previewData.customValues?.map((field: CustomFieldValue) => (
-                <th key={field.fieldId} style={{ padding: "7px 10px", textAlign: "left", border: "1px solid black" }}>
+                <th key={field.fieldId} style={{ padding: "6px 10px", textAlign: "left", border: "1px solid black", fontSize: "13px", fontWeight: "600" }}>
                   {field.label}
                 </th>
               ))}
 
               {/* ✨ Added width: 130px here to anchor the right side of the table */}
-              <th style={{ width: "130px", padding: "7px 10px", textAlign: "right", border: "1px solid black" }}>Amount ({previewData.currency})</th>
+              <th style={{
+  padding: "6px 10px",
+  textAlign: "left",
+  border: "1px solid black",
+  fontSize: "13px",
+  fontWeight: "600"
+}}>Amount ({previewData.currency})</th>
             </tr>
           </thead>
           
@@ -326,19 +350,21 @@ console.log("PREVIEW CLIENT =", previewData.client);
                 
                 {/* colSpan={2} here matches the header split */}
                 <td
+ 
   style={{
-    padding: "10px",
-    fontSize: 12,
+    padding: "6px 8px",
+    fontSize: 11,
     border: "1px solid black",
   }}
+
 >
   {item.description}
 </td>
 
 <td
   style={{
-    padding: "10px",
-    fontSize: 12,
+    padding: "6px 8px",
+    fontSize: 11,
     border: "1px solid black",
   }}
 >
@@ -347,7 +373,7 @@ console.log("PREVIEW CLIENT =", previewData.client);
 
                 {/* Dynamic Custom Cells */}
                 {previewData.customValues?.map((field: CustomFieldValue) => (
-                  <td key={field.fieldId} style={{ padding: "10px", fontSize: 12, border: "1px solid black" }}>
+                  <td key={field.fieldId} style={{ padding: "6px 8px", fontSize: 11, border: "1px solid black" }}>
                     {item.itemCustomValues?.find(
                       (cf: ItemCustomFieldValue) => cf.fieldId === field.fieldId
                     )?.value || "-"}
