@@ -1,10 +1,14 @@
-import { useState } from "react";
+
 import { Hash, Trash2 } from 'lucide-react';
-const CustomFields = ({ fieldDefs, onChange }: any) => {
-  const [selectedFields, setSelectedFields] = useState<any[]>([]);
+const CustomFields = ({
+  fieldDefs,
+  selectedFields,
+  onChange,
+}: any) => {
+  
 
   const handleAddField = (fieldId: number) => {
-  if (selectedFields.some(f => f.fieldId === fieldId)) return;
+  if (selectedFields.some((f: any) => f.fieldId === fieldId)) return;
 
   const field = fieldDefs.find((f: any) => f.fieldId === fieldId);
   if (!field) return;
@@ -18,23 +22,20 @@ const CustomFields = ({ fieldDefs, onChange }: any) => {
     }
   ];
 
-  setSelectedFields(updated);
+
   onChange(updated);
 };
 
-  // const handleValueChange = (index: number, value: string) => {
-  //   const updated = [...selectedFields];
-  //   updated[index].value = value;
-
-  //   setSelectedFields(updated);
-  //   onChange(updated);
-  // };
+   
 
   const removeField = (index: number) => {
-    const updated = selectedFields.filter((_, i) => i !== index);
-    setSelectedFields(updated);
+    const updated = selectedFields.filter(
+  (_: any, i: number) => i !== index
+);
     onChange(updated);
   };
+
+  console.log("CUSTOM FIELDS COMPONENT =", selectedFields);
 
   return (
   
@@ -62,28 +63,28 @@ const CustomFields = ({ fieldDefs, onChange }: any) => {
     </select>
 
     {/* Selected Fields */}
-    {selectedFields.map((field, index) => (
+{selectedFields
+  .filter((field: any) => field.label?.trim())
+  .map((field: any, index: number) => (
+    <div
+      key={field.fieldId}
+      className="flex gap-3 items-center bg-slate-50 border border-slate-500 rounded-xl p-3"
+    >
+      <span className="w-40 text-sm font-semibold text-slate-700">
+        {field.label}
+      </span>
 
-      <div
-        key={field.fieldId}
-        className="flex gap-3 items-center bg-slate-50 border border-slate-500 rounded-xl p-3"
+      
+
+      <button
+        type="button"
+        onClick={() => removeField(index)}
+        className="text-slate-400 hover:text-red-500 transition-colors p-1"
       >
-
-        <span className="w-40 text-sm font-semibold text-slate-700">
-          {field.label}
-        </span>
-
-
-        <button
-          onClick={() => removeField(index)}
-          className="text-slate-500 hover:text-slate-700 font-bold text-lg"
-        >
         <Trash2 size={16} />
-        </button>
-
-      </div>
-
-    ))}
+      </button>
+    </div>
+  ))}
 
   </div>
 
