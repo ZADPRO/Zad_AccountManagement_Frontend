@@ -29,6 +29,14 @@ interface ClientInfo {
   clientCode: string;
   name: string;
   businessName: string;
+
+  supplytypeid?: number;
+  supplytype?: string;
+
+  supplyTypeID?: number;
+  supplyType?: string;
+
+
   clienttype: string;
   email: string;
   mobilenumber: string;
@@ -172,6 +180,24 @@ export default function InvoicePrint({ invoiceId, autoPrint }: Props) {
         
         const data = {
           ...raw,
+
+          client: {
+  ...raw.client,
+
+  supplyType:
+    raw.client?.supplyType ||
+    raw.client?.supplytype ||
+    raw.client?.SupplyType ||
+    "",
+
+  supplyTypeID:
+    raw.client?.supplyTypeID ||
+    raw.client?.supplytypeid ||
+    raw.client?.SupplyTypeID ||
+    0,
+},
+
+
           taxtype: raw.taxtype || raw.taxType || "",
 
           items: (raw.items || []).map((item: any) => ({
@@ -235,6 +261,9 @@ companyLogoUrl: raw.companyLogoUrl,
 // console.log("FULL DATA =", raw);
 // console.log("RAW ITEMS =", raw.items);
 // console.log("MAPPED ITEMS =", data.items);
+
+// console.log("RAW CLIENT =", raw.client);
+// console.log("DATA CLIENT =", data.client);
 
         setInvoice(data); 
       } catch (err: any) {
@@ -478,17 +507,63 @@ companyLogoUrl: raw.companyLogoUrl,
         </div>
         
         {/* Dates */}
-        <div style={{ display:"flex", borderBottom:"1px solid #ccc" }}>
-          <div style={{ flex:1, padding:"7px 14px", borderRight:"1px solid #ccc", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Invoice Date :</b>&nbsp;{formatDate(invoice.invoicedate)}
-          </div>
-           <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Due Date :</b>&nbsp;{formatDate(invoice.invoiceduedate)}
-          </div>
-          <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Invoice No :</b>&nbsp;{invoice.invoicenumber}
-          </div>
-        </div>
+        <div
+  style={{
+    display: "flex",
+    borderBottom: "1px solid #000",
+    minHeight: "90px"
+  }}
+>
+  {/* LEFT SIDE */}
+  <div
+    style={{
+      flex: 1,
+      padding: "10px 14px",
+      borderRight: "1px solid #000",
+      fontSize: 12,
+      lineHeight: 2
+    }}
+  >
+    <div>
+      <strong>Invoice No :</strong>{" "}
+      {invoice.invoicenumber}
+    </div>
+
+    <div>
+      <strong>Invoice Date :</strong>{" "}
+      {formatDate(invoice.invoicedate)}
+    </div>
+
+    <div>
+      <strong>Due Date :</strong>{" "}
+      {formatDate(invoice.invoiceduedate)}
+    </div>
+  </div>
+
+  {/* RIGHT SIDE */}
+  <div
+    style={{
+      flex: 1,
+      padding: "10px 14px",
+      fontSize: 12,
+      lineHeight: 2
+    }}
+  >
+    <div>
+  <strong>Supply Type :</strong>{" "}
+  {invoice.client?.supplytype || invoice.client?.supplyType || "-"}
+</div>
+
+{(
+  invoice.client?.isexport ||
+  invoice.client?.billingCountry?.toLowerCase() !== "india"
+) && (
+  <div>
+    <strong>IEC Code :</strong> AACCZ1874E
+  </div>
+)}
+  </div>
+</div>
 
         {/* Bill To */}
         <div style={{ background:"#4A90D9", color:"white", padding:"5px 14px", fontSize:12, fontWeight:"bold" }}>

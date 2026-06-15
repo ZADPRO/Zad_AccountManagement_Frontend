@@ -116,6 +116,9 @@ export default function InvoicePreview({
   
   // ✅ Change this to 2 to account for the new split column!
   const leftColSpan = 2 + (previewData.customValues?.length || 0);
+
+  console.log("PREVIEW DATA =", previewData);
+console.log("PREVIEW CLIENT =", previewData.client);
   
 
   return (
@@ -205,17 +208,63 @@ export default function InvoicePreview({
         </div>
         
         {/* Dates */}
-        <div style={{ display:"flex", borderBottom:"1px solid #ccc" }}>
-          <div style={{ flex:1, padding:"7px 14px", borderRight:"1px solid #ccc", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Invoice Date :</b>&nbsp;{formatDate(previewData.invoicedate)}
-          </div>
-           <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Due Date :</b>&nbsp;{formatDate(previewData.invoiceduedate)}
-          </div>
-          <div style={{ flex:1, padding:"7px 14px", fontSize:12 }}>
-            <b style={{ color:"#4A90D9" }}>Invoice No :</b>&nbsp;{previewData.invoicenumber}
-          </div>
-        </div>
+<div
+  style={{
+    display: "flex",
+    borderBottom: "1px solid #000",
+    minHeight: "90px"
+  }}
+>
+  {/* LEFT */}
+  <div
+    style={{
+      flex: 1,
+      padding: "10px 14px",
+      borderRight: "1px solid #000",
+      fontSize: 12,
+      lineHeight: 2
+    }}
+  >
+    <div>
+      <strong>Invoice No :</strong>{" "}
+      {previewData.invoicenumber}
+    </div>
+
+    <div>
+      <strong>Invoice Date :</strong>{" "}
+      {formatDate(previewData.invoicedate)}
+    </div>
+
+    <div>
+      <strong>Due Date :</strong>{" "}
+      {formatDate(previewData.invoiceduedate)}
+    </div>
+  </div>
+
+  {/* RIGHT */}
+  <div
+    style={{
+      flex: 1,
+      padding: "10px 14px",
+      fontSize: 12,
+      lineHeight: 2
+    }}
+  >
+    <div>
+      <strong>Supply Type :</strong>{" "}
+      {previewData.client?.supplytype ||
+       previewData.client?.supplyType ||
+       "-"}
+    </div>
+
+    {(previewData.client?.isexport ||
+      previewData.client?.billingCountry?.toLowerCase() !== "india") && (
+      <div>
+        <strong>IEC Code :</strong> AACCZ1874E
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Bill To */}
         <div style={{ background:"#4A90D9", color:"white", padding:"5px 14px", fontSize:12, fontWeight:"bold" }}>
